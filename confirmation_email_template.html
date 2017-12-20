@@ -1,0 +1,17 @@
+Hi <?= sponsor.name ?>:<br/>
+<br/>
+Thank you for submitting a <?= event.tier ?> promotion request for [ <?= event.startTimeShort ?> ] <?= event.title ?>. The following information has been received and is under review for publication:<br/> 
+<br/>
+<em><?= event.mediaRequests.join(', ') ?></em><br/>
+<br/>
+<?= event.confirmationWeekCount ?> weeks prior to your event, you will receive a separate email confirming the outcome of this review.<br/>
+<br/>
+<div style="color:#acabaa">--<br/> 
+Title: <?= event.title ?> <br/>
+Date / Time: <?= event.startTime ?> - <?= event.endTime ?> <br/>
+Location: <?= event.location ?> <br/>
+<? if (registration.type !== "NONE") { ?>Registration Information: <? if(registration.type === "ONLINE") { ?><a href="<?= registration.url ?>">Register online</a>.<? if (registration.deadline) { ?> The deadline to register is <?= registration.deadlineShort ?>.<? } ?><? } else if (registration.type === "OFFLINE") { ?> Register in the <?= registration.location ?>.<? if (registration.deadline) { ?> The deadline to register is <?= registration.deadlineShort ?>.<? } ?><? } else if (registration.type === "BOTH") { ?> Register in the <?= registration.location ?> or <a href="<?= registration.url ?>">register online</a>.<? if (registration.deadline) { ?> The deadline to register is <?= registration.deadlineShort ?>.<? } ?><? } ?><br><? } ?>
+Cost: <?= event.cost ?> <br/>
+Who's it for? <?= event.targetAudience ?> <br/>
+What's it all about? <?= event.about ?>  <br/>
+Other notes: <?= event.notes ?> <br/></div>

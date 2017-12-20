@@ -1,0 +1,9 @@
+Hello <?= sponsor.name ?>,<br/>
+<br/>
+You have recently attempted to submit a <?= event.tier ?> promotion request.<br/>
+<br/>
+Unfortunately, your submission was rejected due to the following error(s):<br/>
+<br/>
+<em><?= errors.join(', ') ?></em><br/>
+<br/>
+Click <a href="<?= editResponseUrl ?>">here</a> to revise your submission. Then click NEXT at the bottom of the page and SUBMIT at the end of the form to re-submit your <?= event.tier ?> promotion request.
