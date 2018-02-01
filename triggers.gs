@@ -57,7 +57,6 @@ function onOpen(e) {
             .addItem("Set Todoist Comment Template",    "setTodoistCommentTemplate")
             .addItem("Set Todoist Tasks Template",      "setTodoistTasksTemplate")
             .addItem("Set Todoist Auth Token",          "setTodoistAuthToken")
-            .addItem("Set Default Designer Email",      "setDefaultDesignerEmail")
             .addItem("Show settings",                   "showCache")            
             //.addItem("Reset to defaults",               "resetToDefaults")
     }
@@ -117,20 +116,17 @@ function startSetup() {
                                 
                                     setTargetCalendar(function() {
                                     
-                                       setTodoistAuthToken(function(){
+                                        setTodoistAuthToken(function(){
 
                                             setTodoistTasksTemplate(function(){
 
-                                                setDefaultDesignerEmail(function(){
-
-                                                    setTodoistCommentTemplate(function(){
-                                    
-                                                        initialize(function(){
-                                                          
-                                                            FormApp.getUi().alert("SETUP COMPLETE!");
-                                                            return;
-                                                        })                  
-                                                    })
+                                                setTodoistCommentTemplate(function(){
+                                                
+                                                    initialize(function(){
+                                                  
+                                                        FormApp.getUi().alert("SETUP COMPLETE!");
+                                                        return;
+                                                    })                  
                                                 })
                                             })
                                         })
@@ -167,7 +163,6 @@ function clearCache_() {
     propertyCache.remove("HOOTSUITE_SPREADSHEET_ID", true);
     propertyCache.remove("HOOTSUITE_SHEET_NAME", true);
     propertyCache.remove("CALENDAR_NAME", true);
-    propertyCache.remove("DEFAULT_DESIGNER_EMAIL", true);
     propertyCache.remove("TODOIST_AUTH_TOKEN", true);
     propertyCache.remove("TODOIST_TASKS_TEMPLATE_ID", true);
     propertyCache.remove("TODOIST_COMMENT_TEMPLATE_ID", true);
@@ -187,7 +182,6 @@ function showCache() {
             "Hootsuite Spreadsheet ID: "         + propertyCache.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
             "Hootsuite Sheet Name: "             + (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME) + "\n" +
             "Calendar Name: "                    + propertyCache.get("CALENDAR_NAME") + "\n" +
-            "Default Designer Email: "           + propertyCache.get("DEFAULT_DESIGNER_EMAIL") + "\n" +
             "Todoist Auth token: "               + propertyCache.get("TODOIST_AUTH_TOKEN") + "\n" +
             "Todoist Tasks Template CSV ID: "    + propertyCache.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
             "Todoist Comment Template GDoc ID: " + propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID")
@@ -261,7 +255,7 @@ function mapToSpreadsheet(title, prompt, key, callback) {
 function setTodoistCommentTemplate(callback) {
     var propertyCache = new PropertyCache(),
         key = "TODOIST_COMMENT_TEMPLATE_ID",
-        title = "MAP TODOIST COMMENT TEMPLATE GDOC",
+        title = "Todoist Comment Template GDoc ID",
         prompt = "Please enter (or paste) the id of the Todoist Comment Template GDoc.",
         ui = FormApp.getUi(),
         result = ui.prompt(
@@ -552,39 +546,6 @@ function setTodoistAuthToken(callback) {
         
         if (token === "" && propertyCache.get("TODOIST_AUTH_TOKEN")) {
             propertyCache.remove("TODOIST_AUTH_TOKEN", true);
-        }
-                
-        
-        callback && callback();
-    }
-    
-    
-}
-
-/**
- * Set the Default Designer Email
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setDefaultDesignerEmail(callback) {
-    var propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET DEFAULT DESIGNER EMAIL",
-            Utilities.formatString("Enter (or paste) the email of the default graphic designer."),
-            ui.ButtonSet.OK
-        )
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var email = result.getResponseText().trim();
-        
-        if (email !== "") propertyCache.put("DEFAULT_DESIGNER_EMAIL", email, true);
-        
-        if (email === "" && propertyCache.get("DEFAULT_DESIGNER_EMAIL")) {
-            propertyCache.remove("DEFAULT_DESIGNER_EMAIL", true);
         }
                 
         
@@ -1404,21 +1365,10 @@ function onFormSubmit(e) {
     
         spreadsheetId:     responseSSID,
         rowNumber:         responseSheetMaxRows,
-      
-//        token:             'd380194cdf40c2a384bdfac3a7bdaa59e23cb85b',     // todoist1@ajrcomputing.com
-//        token:      '441bfeb4a104be0333a8190f94703068e01e94ff', // Chad
-        token: propertyCache.get("TODOIST_AUTH_TOKEN"),
-      
-//        taskTemplateId:    '0BzM8_MjdRURAOHFOYnFINDdlS2M', // Chad
-//        taskTemplateId:    '1pUfm-4huDlWqU3QHmN4odytDLk2u09BA', // Andrew
-        taskTemplateId: propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
-      
-//        commentTemplateId: '1oIdPamSeUWPDQgb5F6NXbjKWcY3gvOVuw6LicegiSwg',     
+        token:             propertyCache.get("TODOIST_AUTH_TOKEN"),
+        taskTemplateId:    propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
         commentTemplateId: propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID"),
-        
-//        designerEmail:     'jamielascher@gmail.com',  
-        designerEmail:   propertyCache.get("DEFAULT_DESIGNER_EMAIL"),
-        
+        staffSheetId:      propertyCache.get("STAFF_SPREADSHEET_ID"),
         properties:        PropertiesService.getScriptProperties(), 
         lock:              LockService.getScriptLock()
     }
