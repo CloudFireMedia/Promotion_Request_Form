@@ -1017,8 +1017,19 @@ function onFormSubmit(e) {
         if (item.postfix) item.id = eval("FORM_" + tier + item.postfix);
         
         if (item.id) {
-            response = formResponse.getResponseForItem(form.getItemById(item.id)).getResponse();
-            type = form.getItemById(item.id).getType();            
+            
+            var nextItem = form.getItemById(item.id)
+            var itemResponse = formResponse.getResponseForItem(nextItem)
+            
+            if (itemResponse !== null) {
+            
+              response = itemResponse.getResponse();
+              type = nextItem.getType(); 
+              
+            } else {
+            
+              return;
+            }
         }
         
         switch(item.colIndex) {
