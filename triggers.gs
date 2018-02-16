@@ -46,15 +46,19 @@ function onOpen(e) {
         
         menu.addItem("Run Setup", "startSetup")
             .addSeparator()
-            .addItem("Map Staff Spreadsheet", "mapToStaffSpreadsheet")
-            .addItem("Map Responses Spreadsheet", "mapToResponsesSpreadsheet")
-            .addItem("Set Target Response Sheet", "setTargetSheetForResponses")
-            .addItem("Set Pull Range for Names", "setPullRangeForUserNames")
-            .addItem("Set Pull Range for Emails", "setPullRangeForUserEmails")
-            .addItem("Map HootSuite Spreadsheet", "mapToHootSuiteSpreadsheet")
-            .addItem("Set Target HootSuite Sheet", "setTargetSheetForHootSuite")
-            .addItem("Set Target Calendar", "setTargetCalendar");
-            //.addItem("Reset to defaults", "resetToDefaults")
+            .addItem("Map Staff Spreadsheet",           "mapToStaffSpreadsheet")
+            .addItem("Map Responses Spreadsheet",       "mapToResponsesSpreadsheet")
+            .addItem("Set Target Response Sheet",       "setTargetSheetForResponses")
+            .addItem("Set Pull Range for Names",        "setPullRangeForUserNames")
+            .addItem("Set Pull Range for Emails",       "setPullRangeForUserEmails")
+            .addItem("Map HootSuite Spreadsheet",       "mapToHootSuiteSpreadsheet")
+            .addItem("Set Target HootSuite Sheet",      "setTargetSheetForHootSuite")
+            .addItem("Set Target Calendar",             "setTargetCalendar")
+            .addItem("Set Todoist Comment Template",    "setTodoistCommentTemplate")
+            .addItem("Set Todoist Tasks Template",      "setTodoistTasksTemplate")
+            .addItem("Set Todoist Auth Token",          "setTodoistAuthToken")
+            .addItem("Show settings",                   "showCache")            
+            //.addItem("Reset to defaults",               "resetToDefaults")
     }
     
     menu.addToUi();
@@ -95,17 +99,36 @@ function startSetup() {
         clearCache_();
         
         // chained function invocations per setup step
+        
         mapToSpreadsheet("MAP STAFF SPREADSHEET", "Please enter (or paste) the id of the staff spreadsheet.", "STAFF_SPREADSHEET_ID", function() {
+        
             setPullRangeForUserNames(function() {
+            
                 setPullRangeForUserEmails(function() {
+                
                     mapToSpreadsheet("MAP RESPONSES SPREADSHEET", "Please enter (or paste) the id of the responses spreadsheet.", "RESPONSES_SPREADSHEET_ID", function() {
+                    
                         setTargetSheetForResponses(function() {
+                        
                             mapToSpreadsheet("MAP HOOTSUITE SPREADSHEET", "Please enter (or paste) the id of the Hootsuite spreadsheet.", "HOOTSUITE_SPREADSHEET_ID", function(){
+                            
                                 setTargetSheetForHootSuite(function() {
+                                
                                     setTargetCalendar(function() {
-                                        initialize(function(){
-                                            FormApp.getUi().alert("SETUP COMPLETE");
-                                            return;
+                                    
+                                        setTodoistAuthToken(function(){
+
+                                            setTodoistTasksTemplate(function(){
+
+                                                setTodoistCommentTemplate(function(){
+                                                
+                                                    initialize(function(){
+                                                  
+                                                        FormApp.getUi().alert("SETUP COMPLETE!");
+                                                        return;
+                                                    })                  
+                                                })
+                                            })
                                         })
                                     })                    
                                 })
@@ -119,6 +142,8 @@ function startSetup() {
     }
     
     return;
+    
+    
 }
 
 /** Clears all cache settings */
@@ -137,9 +162,33 @@ function clearCache_() {
     propertyCache.remove("PULL_RANGE_FOR_USER_EMAILS", true);
     propertyCache.remove("HOOTSUITE_SPREADSHEET_ID", true);
     propertyCache.remove("HOOTSUITE_SHEET_NAME", true);
+    propertyCache.remove("CALENDAR_NAME", true);
+    propertyCache.remove("TODOIST_AUTH_TOKEN", true);
+    propertyCache.remove("TODOIST_TASKS_TEMPLATE_ID", true);
+    propertyCache.remove("TODOIST_COMMENT_TEMPLATE_ID", true);
     
 }
 
+/** Shows all of the cache settings */
+function showCache() {
+    var propertyCache = new PropertyCache(),
+
+        prompt =
+            "Staff Spreadsheet ID: "             + propertyCache.get("STAFF_SPREADSHEET_ID") + "\n" +
+            "Responses Spreadsheet ID: "         + propertyCache.get("RESPONSES_SPREADSHEET_ID") + "\n" +
+            "Responses Sheet name: "             + (propertyCache.get("RESPONSE_SHEET_NAME") || DEFAULT_RESPONSE_SHEET_NAME) + "\n" +
+            "Pull range for users names: "       + (propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES) + "\n" +
+            "Pull range for users emails: "      + (propertyCache.get("PULL_RANGE_FOR_USER_EMAILS") || DEFAULT_PULL_RANGE_FOR_USER_EMAILS) + "\n" +
+            "Hootsuite Spreadsheet ID: "         + propertyCache.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
+            "Hootsuite Sheet Name: "             + (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME) + "\n" +
+            "Calendar Name: "                    + propertyCache.get("CALENDAR_NAME") + "\n" +
+            "Todoist Auth token: "               + propertyCache.get("TODOIST_AUTH_TOKEN") + "\n" +
+            "Todoist Tasks Template CSV ID: "    + propertyCache.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
+            "Todoist Comment Template GDoc ID: " + propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID")
+
+    FormApp.getUi().alert(prompt)
+  
+}
 
 /**
  * Maps the form to a spreadsheet; stores the spreadsheet
@@ -154,7 +203,6 @@ function clearCache_() {
  *                               multiple invocations.
  */
 function mapToSpreadsheet(title, prompt, key, callback) {
-    
     var propertyCache = new PropertyCache(),
         ui = FormApp.getUi(),
         result = ui.prompt(
@@ -175,10 +223,10 @@ function mapToSpreadsheet(title, prompt, key, callback) {
             
         } catch(e) {
         
-            if (e.message.indexOf("Bad value ") !== -1) {
+            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
                         
                 result = ui.alert(
-                    "Error accessing Spreadsheet ID (" +  title + ")! \nTry again.",
+                    "Error accessing Spreadsheet (" +  title + ")! \nTry again.",
                     ui.ButtonSet.OK
                 );
                 
@@ -197,6 +245,113 @@ function mapToSpreadsheet(title, prompt, key, callback) {
     
 }
 
+/** 
+ * Create prompt to map form to Todoist comment template GDoc id 
+ *
+ * @param {Function} callback  - An optional callback to be invoked when the 
+ *                               dialog recieves confirmation. Used to chain
+ *                               multiple invocations
+ */
+function setTodoistCommentTemplate(callback) {
+    var propertyCache = new PropertyCache(),
+        key = "TODOIST_COMMENT_TEMPLATE_ID",
+        title = "Todoist Comment Template GDoc ID",
+        prompt = "Please enter (or paste) the id of the Todoist Comment Template GDoc.",
+        ui = FormApp.getUi(),
+        result = ui.prompt(
+            title,
+            Utilities.formatString(prompt),
+            ui.ButtonSet.OK
+        );
+        
+    
+    if (result.getSelectedButton() === ui.Button.OK) {
+
+        try {
+          
+            var id = result.getResponseText().trim()
+            var gdoc = DocumentApp.openById(id);
+            
+            propertyCache.put(key, gdoc.getId(), true);
+            callback && callback();
+            
+        } catch(e) {
+        
+            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
+                        
+                var result = ui.alert(
+                    "Error accessing " +  title + "! \nTry again.",
+                    ui.ButtonSet.OK
+                );
+                
+                if (result === ui.Button.OK) {
+                    setTodoistCommentTemplate(callback);
+                }
+                
+            } else {
+            
+              throw e
+            }
+            
+        }
+        
+    }
+    
+}
+
+/** 
+ * Create prompt to set Todoist tasks template CSV ID 
+ *
+ * @param {Function} callback  - An optional callback to be invoked when the 
+ *                               dialog recieves confirmation. Used to chain
+ *                               multiple invocations
+ */
+function setTodoistTasksTemplate(callback) {
+    var propertyCache = new PropertyCache(),
+        key = "TODOIST_TASKS_TEMPLATE_ID",
+        title = "MAP TODOIST TASK TEMPLATE",
+        prompt = "Please enter (or paste) the id of the Todoist tasks template CSV.",
+        ui = FormApp.getUi(),
+        result = ui.prompt(
+            title,
+            Utilities.formatString(prompt),
+            ui.ButtonSet.OK
+        );
+        
+    if (result.getSelectedButton() === ui.Button.OK) {
+
+        try {
+          
+            var id = result.getResponseText().trim()
+            var file = DriveApp.getFileById(id);
+            
+            propertyCache.put(key, file.getId(), true);
+            callback && callback();
+            
+        } catch(e) {
+        
+            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
+                        
+                var result = ui.alert(
+                    "Error accessing " +  title + "! \nTry again.",
+                    ui.ButtonSet.OK
+                );
+                
+                if (result === ui.Button.OK) {
+                    setTodoistTasksTemplate(callback);
+                }
+                
+            } else {
+            
+              throw e
+            }
+            
+        }
+        
+    }
+    
+}
+    
 /**
  * Sets the desired pull range for user names.
  * Defaults to the constant DEFAULT_PULL_RANGE_FOR_USER_NAMES.
@@ -264,7 +419,8 @@ function setPullRangeForUserEmails(callback) {
         callback && callback();
         
     }
-    
+
+
 }
 
 /**
@@ -299,7 +455,6 @@ function setTargetSheetForResponses(callback) {
     }
     
 }
-
 
 /**
  * Sets the hootsuite sheet name.
@@ -364,6 +519,39 @@ function setTargetCalendar(callback) {
         
         callback && callback();
     }
+    
+}
+
+/**
+ * Sets Todoist Auth Token
+ *
+ * @param {Function} callback  - An optional callback to be invoked when the 
+ *                               dialog recieves confirmation. Used to chain
+ *                               multiple invocations.
+ */
+function setTodoistAuthToken(callback) {
+    var propertyCache = new PropertyCache(),
+        ui = FormApp.getUi(),
+        result = ui.prompt(
+            "SET TODOIST AUTH TOKEN",
+            Utilities.formatString("Enter (or paste) the authorisation token for the Todoist account."),
+            ui.ButtonSet.OK
+        )
+    
+    if (result.getSelectedButton() === ui.Button.OK) {
+        
+        var token = result.getResponseText().trim();
+        
+        if (token !== "") propertyCache.put("TODOIST_AUTH_TOKEN", token, true);
+        
+        if (token === "" && propertyCache.get("TODOIST_AUTH_TOKEN")) {
+            propertyCache.remove("TODOIST_AUTH_TOKEN", true);
+        }
+                
+        
+        callback && callback();
+    }
+    
     
 }
 
@@ -433,6 +621,9 @@ function initialize(callback) {
         
         updateForm(null);
     
+    } else {
+    
+      FormApp.getUi().alert('Only the owner of the form can start the triggers required to process form submissions')
     }
         
     callback && callback();
@@ -1172,19 +1363,14 @@ function onFormSubmit(e) {
     
     var todoistConfig = {
     
-      spreadsheetId:     responseSSID,
-      rowNumber:         responseSheetMaxRows,
-      
-//      token:             'd380194cdf40c2a384bdfac3a7bdaa59e23cb85b',     // todoist1@ajrcomputing.com
-      token:      '441bfeb4a104be0333a8190f94703068e01e94ff', // Chad
-      
-//      taskTemplateId:    '0BzM8_MjdRURAOHFOYnFINDdlS2M', // Chad
-      taskTemplateId:    '1pUfm-4huDlWqU3QHmN4odytDLk2u09BA', // Andrew
-      
-      commentTemplateId: '1oIdPamSeUWPDQgb5F6NXbjKWcY3gvOVuw6LicegiSwg',       
-      designerEmail:     'jamielascher@gmail.com',            
-      properties:        PropertiesService.getScriptProperties(), 
-      lock:              LockService.getScriptLock()
+        spreadsheetId:     responseSSID,
+        rowNumber:         responseSheetMaxRows,
+        token:             propertyCache.get("TODOIST_AUTH_TOKEN"),
+        taskTemplateId:    propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
+        commentTemplateId: propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID"),
+        staffSheetId:      propertyCache.get("STAFF_SPREADSHEET_ID"),
+        properties:        PropertiesService.getScriptProperties(), 
+        lock:              LockService.getScriptLock()
     }
 
     Todoist.onFormSubmit(todoistConfig)

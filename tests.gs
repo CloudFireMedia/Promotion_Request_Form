@@ -42,7 +42,12 @@ function test_dumpConfig() {
   }
 
   Logger.log('ScriptProperties:')
-  Logger.log(PropertiesService.getScriptProperties().getProperties())    
+  Logger.log(PropertiesService.getScriptProperties().getProperties())   
+
+  Logger.log('Triggers:')  
+  ScriptApp.getProjectTriggers().forEach(function(trigger) {
+    Logger.log('Trigger: ' + trigger.getHandlerFunction() + ' (' + trigger.getUniqueId() + ')')
+  })
 }
 
 function test_clearConfig() {
