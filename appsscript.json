@@ -13,8 +13,7 @@
     "libraries": [{
       "userSymbol": "Todoist",
       "libraryId": "17nhyoPNV3pGxwp-YTQvceFtzqDHXDAfTdiShgHqghL4bz9WxrlW3Uc7o",
-      "version": "13",
-      "developmentMode": true
+      "version": "14"
     }]
   },
   "exceptionLogging": "STACKDRIVER"
