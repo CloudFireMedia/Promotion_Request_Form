@@ -1,9 +1,8 @@
 function Log_(message) {
-  SpreadsheetApp.openById('1WBf67suu2yS3x36ir8BABSO_yXJjhBjZlpDvgf76KCw').getSheetByName('Log').appendRow(message)
+  SpreadsheetApp.openById('12BIsk1JV_-G0hMNQA7orKrAXEe5KFSzPA9EMt1yxMmU').getSheetByName('Log').appendRow([message])
 }
 
 function test() {
-  test_init()
   SpreadsheetApp.openById('1oO3kz6fQP74TAzW3JXlpLQR23mn5uAQfd-fGcakCtId')
 }
 

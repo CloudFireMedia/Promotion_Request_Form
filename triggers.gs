@@ -1017,8 +1017,19 @@ function onFormSubmit(e) {
         if (item.postfix) item.id = eval("FORM_" + tier + item.postfix);
         
         if (item.id) {
-            response = formResponse.getResponseForItem(form.getItemById(item.id)).getResponse();
-            type = form.getItemById(item.id).getType();            
+            
+            var nextItem = form.getItemById(item.id)
+            var itemResponse = formResponse.getResponseForItem(nextItem)
+            
+            if (itemResponse !== null) {
+            
+              response = itemResponse.getResponse();
+              type = nextItem.getType(); 
+              
+            } else {
+            
+              return;
+            }
         }
         
         switch(item.colIndex) {
@@ -1227,7 +1238,7 @@ function onFormSubmit(e) {
     
     var responseSheetMaxRows = responseSheet.getMaxRows();
     
-    PropertiesService.getScriptProperties().setProperty("rowData", JSON.stringify(rowData));
+    PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
     
     Sheets.Spreadsheets.batchUpdate(
         {
@@ -1369,8 +1380,8 @@ function onFormSubmit(e) {
         taskTemplateId:    propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
         commentTemplateId: propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID"),
         staffSheetId:      propertyCache.get("STAFF_SPREADSHEET_ID"),
-        properties:        PropertiesService.getScriptProperties(), 
-        lock:              LockService.getScriptLock()
+        properties:        PropertiesService.getDocumentProperties(), 
+        lock:              LockService.getDocumentLock()
     }
 
     Todoist.onFormSubmit(todoistConfig)
