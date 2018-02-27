@@ -1238,7 +1238,7 @@ function onFormSubmit(e) {
     
     var responseSheetMaxRows = responseSheet.getMaxRows();
     
-    PropertiesService.getScriptProperties().setProperty("rowData", JSON.stringify(rowData));
+    PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
     
     Sheets.Spreadsheets.batchUpdate(
         {
@@ -1380,8 +1380,8 @@ function onFormSubmit(e) {
         taskTemplateId:    propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
         commentTemplateId: propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID"),
         staffSheetId:      propertyCache.get("STAFF_SPREADSHEET_ID"),
-        properties:        PropertiesService.getScriptProperties(), 
-        lock:              LockService.getScriptLock()
+        properties:        PropertiesService.getDocumentProperties(), 
+        lock:              LockService.getDocumentLock()
     }
 
     Todoist.onFormSubmit(todoistConfig)
