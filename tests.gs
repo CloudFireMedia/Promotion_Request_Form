@@ -1,5 +1,13 @@
 function Log_(message) {
-  SpreadsheetApp.openById('12BIsk1JV_-G0hMNQA7orKrAXEe5KFSzPA9EMt1yxMmU').getSheetByName('Log').appendRow([message])
+
+  if (typeof message === 'object') {
+    message = JSON.stringify(message)
+  }
+
+  SpreadsheetApp
+    .openById(CONFIG.FILES.RESPONSES_SPREADSHEET_ID)
+    .getSheetByName('Log')
+    .appendRow([new Date() + ' - ' + message])
 }
 
 function test() {

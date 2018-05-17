@@ -935,6 +935,8 @@ function isLeapYear(year) {
  * @param {Event} e - An event object.
  */
 function onFormSubmit(e) {
+
+    Log_(e)
     
     var propertyCache = new PropertyCache(),
         
@@ -1384,9 +1386,11 @@ function onFormSubmit(e) {
         lock:              LockService.getDocumentLock()
     }
 
-    Todoist.onFormSubmit(todoistConfig)
+    Todoist.onFormSubmit(todoistConfig);
     
-}
+    checkPromotionCalendar(e);
+    
+} // onFormSubmit()
 
 /**
  * Email confrimation of reciept with event summary.
@@ -1478,8 +1482,7 @@ function emailResourceTeamLeader(templateData) {
         }
         
         return state;
-    });
-    
+    }); 
 }
 
 /**
@@ -1495,7 +1498,6 @@ function validateFormResponse(data) {
     (data.registration.type !== "NONE") && !!data.registration.deadlineDate && (startTime - data.registration.deadlineDate.getTime() < 0) && errors.push("Registration due date cannot exceed event date");
     
     return {"errors":errors};
-    
 }
 
 /**
@@ -1516,9 +1518,7 @@ function sendErrorReportEmailToRespondent(recipientEmail, data) {
             "subject": "Action required!",
             "htmlBody":template.evaluate().getContent()
         }
-    );
-    
-
+    );   
 }
 
 /**
