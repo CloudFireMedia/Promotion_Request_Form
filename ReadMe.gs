@@ -1,3 +1,8 @@
+// v1.3
+// ----
+//
+// - Add checkPromotionCalendar()
+
 // v1.2
 // ----
 //
