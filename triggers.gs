@@ -35,7 +35,6 @@ function onInstall(e) {
  */
 function onOpen(e) {
 
-    // CCN Tool
     var menu = FormApp.getUi().createAddonMenu();
     
     if (e.authMode === ScriptApp.AuthMode.NONE) {
