@@ -4,42 +4,39 @@
  * in the calendar GSheet that a promotion request has been made for this event.
  */
 
-function checkPromotionCalendar(e) {
+function checkPromotionCalendar_(e) {
 
-  var isTestMode = e.hasOwnProperty('testMode');
   var isRunFromTrigger = e.hasOwnProperty('triggerUid');
-  
-  var responsesSpreadsheet = SpreadsheetApp.openById(CONFIG.FILES.RESPONSES_SPREADSHEET_ID);
+  var responsesSpreadsheet = SpreadsheetApp.openById(Config.get('PROMOTION_FORM_RESPONSES_SHEET_ID'));
   
   if (responsesSpreadsheet === null) {
     throw new Error('Can not find the responses spreadsheet');
   }
   
-  var dataSheetName = CONFIG.DATA_SHEET_NAME;
-  
-  var responseSheet = responsesSpreadsheet.getSheetByName(dataSheetName);
+  var responseSheet = responsesSpreadsheet.getSheetByName(DATA_SHEET_NAME);
   
   if (responseSheet === null) {
-    throw new Error('Unable to find sheet named "' + dataSheetName + '".');
+    throw new Error('Unable to find sheet named "' + DATA_SHEET_NAME + '".');
   }
   
   var responseSheetValues = responseSheet.getDataRange().getValues();
   
-  var calendarSS = SpreadsheetApp.openByUrl(CONFIG.FILES.PROMOTION_CALENDAR_SPREADSHEET_URL); 
+  var promotionDeadlinesCalendarId = Config.get('PROMOTION_DEADLINES_CALENDAR_ID');
+  var calendarSS = SpreadsheetApp.openById(promotionDeadlinesCalendarId); 
   
   if (!calendarSS) {
   
     throw new Error (
       'Unable to find CCN Events Promotion Calendar spreadsheet. ' + 
-      'Expected to find it at "' + CONFIG.FILES.PROMOTION_CALENDAR_SPREADSHEET_URL + '"');
+      'Expected to find GSheet "' + promotionDeadlinesCalendarId + '"');
   }
   
-  var calendarSheet = calendarSS.getSheetByName(CONFIG.FILES.PROMOTION_CALENDAR_SHEET_NAME); 
+  var calendarSheet = calendarSS.getSheetByName(PROMOTION_CALENDAR_SHEET_NAME_); 
   
   if (!calendarSheet) {
   
     throw new Error (
-      'Unable to find sheet named "' + CONFIG.FILES.PROMOTION_CALENDAR_SHEET_NAME + '" ' + 
+      'Unable to find sheet named "' + PROMOTION_CALENDAR_SHEET_NAME_ + '" ' + 
       'on ' + calendarSS.getName() + ' spreadsheet');      
   }
   
@@ -59,19 +56,19 @@ function checkPromotionCalendar(e) {
     var eventDate = responseSheetValues[i][startDateColumnIndex];
     
     if (!eventDate) {
-      errors.push('No event date found, line ' + (i+1) + ' of ' + dataSheetName + ' sheet.  Skipping this row.');
+      errors.push('No event date found, line ' + (i+1) + ' of ' + DATA_SHEET_NAME + ' sheet.  Skipping this row.');
       continue;
     }
     
     if (!eventDate instanceof Date){
-      errors.push('Date ' + eventDate + ' on row ' + (i+1) + ' of ' + dataSheetName + ' sheet is not a valid date.  Skipping this row.');
+      errors.push('Date ' + eventDate + ' on row ' + (i+1) + ' of ' + DATA_SHEET_NAME + ' sheet is not a valid date.  Skipping this row.');
       continue;
     }
     
     var eventTitle = responseSheetValues[i][titleColumnIndex].trim();
     
     if (!eventTitle) {
-      warnings.push('No event title found, line ' + (i+1) + ' of ' + dataSheetName + ' sheet.  Skipping this row.');
+      warnings.push('No event title found, line ' + (i+1) + ' of ' + DATA_SHEET_NAME + ' sheet.  Skipping this row.');
       continue;
     }
     
@@ -90,19 +87,19 @@ function checkPromotionCalendar(e) {
       var calendarEventDate = calendarValues[j][3];//column 4 is SHORT START DATE
       
       if (!calendarEventDate) {
-        errors.push('No event date found, line ' + (j+1) + ' of ' + dataSheetName + ' sheet.  Skipping this row.');
+        errors.push('No event date found, line ' + (j+1) + ' of ' + DATA_SHEET_NAME + ' sheet.  Skipping this row.');
         continue;
       }
       
       if (!(calendarEventDate instanceof Date)) {
-        errors.push('Date ' + calendarEventDate + ' on row ' + (j+1) + ' of ' + dataSheetName + ' sheet is not a valid date.  Skipping this row.');
+        errors.push('Date ' + calendarEventDate + ' on row ' + (j+1) + ' of ' + DATA_SHEET_NAME + ' sheet is not a valid date.  Skipping this row.');
         continue;
       }
       
       var calendarEventTitle = calendarValues[j][4].trim();//column 5 is EVENT TITLE
       
       if (!calendarEventTitle){
-        warnings.push('No event title found, line ' + (j+1) + ' of ' + dataSheetName + ' sheet.  Skipping this row.');
+        warnings.push('No event title found, line ' + (j+1) + ' of ' + DATA_SHEET_NAME + ' sheet.  Skipping this row.');
         continue;
       }
       
@@ -115,7 +112,7 @@ function checkPromotionCalendar(e) {
       // compare eventTitle and calendarEventTitle if dates are within the allowed range
       var dayDiff = Utils.DateDiff.inDays(calendarEventDate, eventDate);
       
-      if (dayDiff <= CONFIG.MAX_EVENT_DATE_DIFF) {
+      if (dayDiff <= MAX_EVENT_DATE_DIFF_) {
       
         // compare the longer list to the shorter list
         var shorterList = (eventTitleWords.length <= calendarEventTitleWords.length) ? eventTitleWords : calendarEventTitleWords;
@@ -132,7 +129,7 @@ function checkPromotionCalendar(e) {
         
         var matchPercent = matches / shorterList.length;
         
-        if (matchPercent > CONFIG.MATCH_THRESHOLD_PERCENT) {
+        if (matchPercent > MATCH_THRESHOLD_PERCENT_) {
         
           recordsFound.push([
             'Title on this spreadsheet: ' + eventTitle,
@@ -145,7 +142,7 @@ function checkPromotionCalendar(e) {
             'Date difference (# days): ' + dayDiff
           ]);
                     
-          if (!isTestMode && CONFIG.TEST_WRITE_TO_CALENDAR) {
+          if (TEST_WRITE_TO_CALENDAR_) {
             calendarSheet.getRange(j+1,7).setValue('Yes');
           }
           
@@ -165,7 +162,7 @@ function checkPromotionCalendar(e) {
     // if 0, No Records; if 1, 1 Record; else n Records - just to be gramatically more preciserer
     var html = '<h1>' + (recordsFound.length === 0 ? 'No' : recordsFound.length) + ' Matching Record' + (recordsFound.length === 1 ? '' : 's') + '</h1>';
     
-    if (isTestMode) {
+    if (TEST_CHECK_PROMOTION_CALENDAR_TEST_MODE_) {
       html += '<h3 style="color:red">TEST MODE - NO CHANGES MADE</h3>'
     }
     
@@ -202,4 +199,4 @@ function checkPromotionCalendar(e) {
     
   } // !isRunFromTrigger
   
-} // checkPromotionCalendar()
+} // checkPromotionCalendar_()

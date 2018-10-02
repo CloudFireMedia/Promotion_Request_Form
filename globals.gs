@@ -1,7 +1,21 @@
 /** Global properties and config options */
 
+var SCRIPT_NAME = "Promotion Request Form";
+var SCRIPT_VERSION = "v1.3.dev_ajr";
 
 Object.defineProperties(this, {
+
+//var TEST_USE_TODOIST_                        = false;
+//var TEST_CHECK_PROMOTION_CALENDAR_           = false;
+//var TEST_CHECK_PROMOTION_CALENDAR_TEST_MODE_ = false;
+//var TEST_WRITE_TO_CALENDAR_                  = false;
+//
+//var DATA_SHEET_NAME_ = 'Incoming_Data';
+//var PROMOTION_CALENDAR_SHEET_NAME_ = 'Communications Director Master';
+//
+//var MATCH_THRESHOLD_PERCENT_ = 0.75; // fuzzy logic matching
+//var MAX_EVENT_DATE_DIFF_ = 10
+
     "DEFAULT_PULL_RANGE_FOR_USER_NAMES":{
         "value":"Staff!A3:B"
     },

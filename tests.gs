@@ -5,7 +5,7 @@ function Log_(message) {
   }
 
   SpreadsheetApp
-    .openById(CONFIG.FILES.RESPONSES_SPREADSHEET_ID)
+    .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
     .getSheetByName('Log')
     .appendRow([new Date() + ' - ' + message])
 }
