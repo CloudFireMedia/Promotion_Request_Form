@@ -3,42 +3,8 @@
 /** Force enable drive scope */
 /** Drive.Files.list(); */  
 
-/**
- * onOpen trigger.
- *
- * @param {Event} e - Event object.
- */
-//function onOpen(e) {
-//
-//    var menu = FormApp.getUi().createAddonMenu();
-//    
-//    if (e.authMode === ScriptApp.AuthMode.NONE) {
-//    
-//        menu.addItem("Run Setup", "startSetup");
-//        
-//    } else {
-//        
-//        menu.addItem("Run Setup", "startSetup")
-//            .addSeparator()
-//            .addItem("Map Staff Spreadsheet",           "mapToStaffSpreadsheet")
-//            .addItem("Map Responses Spreadsheet",       "mapToResponsesSpreadsheet")
-//            .addItem("Set Target Response Sheet",       "setTargetSheetForResponses")
-//            .addItem("Set Pull Range for Names",        "setPullRangeForUserNames")
-//            .addItem("Set Pull Range for Emails",       "setPullRangeForUserEmails")
-//            .addItem("Map HootSuite Spreadsheet",       "mapToHootSuiteSpreadsheet")
-//            .addItem("Set Target HootSuite Sheet",      "setTargetSheetForHootSuite")
-//            .addItem("Set Target Calendar",             "setTargetCalendar")
-//            .addItem("Set Todoist Comment Template",    "setTodoistCommentTemplate")
-//            .addItem("Set Todoist Tasks Template",      "setTodoistTasksTemplate")
-//            .addItem("Set Todoist Auth Token",          "setTodoistAuthToken")
-//            .addItem("Show settings",                   "showCache")            
-//            //.addItem("Reset to defaults",               "resetToDefaults")
-//    }
-//    
-//    menu.addToUi();
-//   
-//}
-//
+
+
 ///** Creates prompt to map form to staff spreadsheet id */
 //function mapToStaffSpreadsheet() {
 //    mapToSpreadsheet("MAP STAFF SPREADSHEET", "Please enter (or paste) the id of the staff spreadsheet.", "STAFF_SPREADSHEET_ID");
@@ -145,26 +111,26 @@
 //    
 //}
 
-///** Shows all of the cache settings */
-//function showCache() {
-//    var propertyCache = new PropertyCache(),
-//
-//        prompt =
-//            "Staff Spreadsheet ID: "             + propertyCache.get("STAFF_SPREADSHEET_ID") + "\n" +
-//            "Responses Spreadsheet ID: "         + propertyCache.get("RESPONSES_SPREADSHEET_ID") + "\n" +
-//            "Responses Sheet name: "             + (propertyCache.get("RESPONSE_SHEET_NAME") || DEFAULT_RESPONSE_SHEET_NAME) + "\n" +
-//            "Pull range for users names: "       + (propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES) + "\n" +
-//            "Pull range for users emails: "      + (propertyCache.get("PULL_RANGE_FOR_USER_EMAILS") || DEFAULT_PULL_RANGE_FOR_USER_EMAILS) + "\n" +
-//            "Hootsuite Spreadsheet ID: "         + propertyCache.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
-//            "Hootsuite Sheet Name: "             + (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME) + "\n" +
-//            "Calendar Name: "                    + propertyCache.get("CALENDAR_NAME") + "\n" +
-//            "Todoist Auth token: "               + propertyCache.get("TODOIST_AUTH_TOKEN") + "\n" +
-//            "Todoist Tasks Template CSV ID: "    + propertyCache.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
-//            "Todoist Comment Template GDoc ID: " + propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID")
-//
-//    FormApp.getUi().alert(prompt)
-//  
-//}
+/** Shows all of the cache settings */
+function showCache() {
+    var propertyCache = new PropertyCache(),
+
+        prompt =
+            "Staff Spreadsheet ID: "             + Config.get("STAFF_DATA_GSHEET_ID") + "\n" +
+            "Responses Spreadsheet ID: "         + Config.get("PROMOTION_FORM_RESPONSES_GSHEET_ID") + "\n" +
+            "Responses Sheet name: "             + DEFAULT_RESPONSE_SHEET_NAME + "\n" +
+            "Pull range for users names: "       + DEFAULT_PULL_RANGE_FOR_USER_NAMES + "\n" +
+            "Pull range for users emails: "      + DEFAULT_PULL_RANGE_FOR_USER_EMAILS + "\n" +
+            "Hootsuite Spreadsheet ID: "         + Config.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
+            "Hootsuite Sheet Name: "             + DEFAULT_HOOTSUITE_SHEET_NAME + "\n" +
+            "Calendar Name: "                    + Config.get("GOOGLE_CALENDAR_NAME") + "\n" +
+            "Todoist Auth token: "               + Config.get("TODOIST_AUTH_TOKEN") + "\n" +
+            "Todoist Tasks Template CSV ID: "    + Config.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
+            "Todoist Comment Template GDoc ID: " + Config.get("TODOIST_COMMENT_TEMPLATE_ID")
+
+    FormApp.getUi().alert(prompt)
+  
+}
 
 /**
  * Maps the form to a spreadsheet; stores the spreadsheet
@@ -538,72 +504,72 @@
  *                               dialog recieves confirmation. Used to chain
  *                               multiple invocations.
  */
-function initialize(callback) {
-    
-    var trigger,
-        response,
-        result,
-        propertyCache = new PropertyCache(),
-        triggerIDs = [
-            propertyCache.get(UPDATE_FORM_CONTEXT_ID),
-            propertyCache.get(FORM_SUBMIT_CONTEXT_ID)
-        ].filter(function(id) {
-            return id !== null;
-        });
-    
-    // Fetch metadata info on form to determine if current user owns the form
-    
-    var url = Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=ownedByMe", FormApp.getActiveForm().getId())
-    var options = {
-        "headers":{
-            "Authorization":"Bearer " + ScriptApp.getOAuthToken()
-        },
-        "muteHttpExceptions": true
-    }
-
-    response = UrlFetchApp.fetch(url, options);
-    
-    if (response.getResponseCode() !== 200) {
-      throw new Error(response.getContentText())
-    }
-    
-    result = JSON.parse(response);
-    
-    // Only allow owner of the form to create/destroy these triggers
-    if (result.ownedByMe) {
-        
-        // delete existing "pollStaffSpreadsheet" and "onFormSubmit" triggers
-        ScriptApp.getProjectTriggers().forEach(function(trigger) {
-            //var trigger = ScriptApp.getProjectTriggers()[0];
-            if(trigger.getHandlerFunction() === "updateForm" || trigger.getHandlerFunction() === "onFormSubmit") {
-                
-                ScriptApp.deleteTrigger(trigger);
-                                        
-            }
-                
-        });
-                
-        // creates a time-based trigger; trigger handler invokes polling on staff spreadsheet to
-        // update names in form as well as updates date patterns
-        // Note: Time intervals cannot be lower that one hour for add-ons. Script will throw an error otherwise.
-        //       Alternative is to use an external cron service to trigger updates via web app.
-        
-        trigger = ScriptApp.newTrigger("updateForm").timeBased().everyHours(1).create();
-        propertyCache.put(UPDATE_FORM_CONTEXT_ID, trigger.getUniqueId(), true);
-        
-        // create an event-based trigger for onFormSubmit
-        trigger = ScriptApp.newTrigger("onFormSubmit").forForm(FormApp.getActiveForm().getId()).onFormSubmit().create();
-        propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
-        
-        updateForm(null);
-    
-    } else {
-    
-      FormApp.getUi().alert('Only the owner of the form can start the triggers required to process form submissions')
-    }
-        
-    callback && callback();
-}
+//function initialize(callback) {
+//    
+//    var trigger,
+//        response,
+//        result,
+//        propertyCache = new PropertyCache(),
+//        triggerIDs = [
+//            propertyCache.get(UPDATE_FORM_CONTEXT_ID),
+//            propertyCache.get(FORM_SUBMIT_CONTEXT_ID)
+//        ].filter(function(id) {
+//            return id !== null;
+//        });
+//    
+//    // Fetch metadata info on form to determine if current user owns the form
+//    
+//    var url = Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=ownedByMe", FormApp.getActiveForm().getId())
+//    var options = {
+//        "headers":{
+//            "Authorization":"Bearer " + ScriptApp.getOAuthToken()
+//        },
+//        "muteHttpExceptions": true
+//    }
+//
+//    response = UrlFetchApp.fetch(url, options);
+//    
+//    if (response.getResponseCode() !== 200) {
+//      throw new Error(response.getContentText())
+//    }
+//    
+//    result = JSON.parse(response);
+//    
+//    // Only allow owner of the form to create/destroy these triggers
+//    if (result.ownedByMe) {
+//        
+//        // delete existing "pollStaffSpreadsheet" and "onFormSubmit" triggers
+//        ScriptApp.getProjectTriggers().forEach(function(trigger) {
+//            //var trigger = ScriptApp.getProjectTriggers()[0];
+//            if(trigger.getHandlerFunction() === "updateForm" || trigger.getHandlerFunction() === "onFormSubmit") {
+//                
+//                ScriptApp.deleteTrigger(trigger);
+//                                        
+//            }
+//                
+//        });
+//                
+//        // creates a time-based trigger; trigger handler invokes polling on staff spreadsheet to
+//        // update names in form as well as updates date patterns
+//        // Note: Time intervals cannot be lower that one hour for add-ons. Script will throw an error otherwise.
+//        //       Alternative is to use an external cron service to trigger updates via web app.
+//        
+//        trigger = ScriptApp.newTrigger("updateForm").timeBased().everyHours(1).create();
+//        propertyCache.put(UPDATE_FORM_CONTEXT_ID, trigger.getUniqueId(), true);
+//        
+//        // create an event-based trigger for onFormSubmit
+//        trigger = ScriptApp.newTrigger("onFormSubmit").forForm(FormApp.getActiveForm().getId()).onFormSubmit().create();
+//        propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
+//        
+//        updateForm(null);
+//    
+//    } else {
+//    
+//      FormApp.getUi().alert('Only the owner of the form can start the triggers required to process form submissions')
+//    }
+//        
+//    callback && callback();
+//}
 
 /**
  * Updates the name and date range items on 
@@ -913,25 +879,16 @@ function isLeapYear(year) {
 function onFormSubmit(e) {
 
     Log_(e);
-    
-//    var propertyCache = new PropertyCache(),
-        
+
     var hootsuiteSSID = Config.get("HOOTSUITE_SPREADSHEET_ID"),
-//        hootsuiteSheetName = (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME),    
-        hootsuiteSheetName = DEFAULT_HOOTSUITE_SHEET_NAME,
+        hootsuiteSheet = SpreadsheetApp.openById(hootsuiteSSID).getSheetByName(DEFAULT_HOOTSUITE_SHEET_NAME),
+        hootsuiteSheetID = hootsuiteSheet.getSheetId(),  
         
-        hootsuiteSheet = SpreadsheetApp.openById(hootsuiteSSID).getSheetByName(hootsuiteSheetName),
-        hootsuiteSheetID = hootsuiteSheet.getSheetId(),
-        
-        responseSSID = Config.get("RESPONSES_SPREADSHEET_ID"),
-        responseSheetName = (propertyCache.get("RESPONSE_SHEET_NAME") || DEFAULT_RESPONSE_SHEET_NAME),
-        
-        responseSheet = SpreadsheetApp.openById(responseSSID).getSheetByName(responseSheetName),
+        responseSSID = Config.get("PROMOTION_FORM_RESPONSES_GSHEET_ID"),
+        responseSheet = SpreadsheetApp.openById(responseSSID).getSheetByName(DEFAULT_RESPONSE_SHEET_NAME),
         responseSheetID = responseSheet.getSheetId(),
         
-        staffSSID = Config.get("STAFF_SPREADSHEET_ID"),
-        staffNameRange = (propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES),
-        staffEmailRange = (propertyCache.get("PULL_RANGE_FOR_USER_EMAILS") || DEFAULT_PULL_RANGE_FOR_USER_EMAILS),
+        staffSSID = Config.get("STAFF_DATA_GSHEET_ID"),
                 
         formResponse = e.response,
         form = e.source,
@@ -1023,12 +980,21 @@ function onFormSubmit(e) {
                 templateData.sponsor.name = name;
                 break;
                 
-            case 5:    // Set Email
-                var rowIndex = Sheets.Spreadsheets.Values.get(staffSSID, staffNameRange).values.map(function(row){
+            case 5:    // Set Email            
+                var staffValues = Sheets.Spreadsheets.Values.get(staffSSID, DEFAULT_PULL_RANGE_FOR_USER_NAMES).values;
+                Log_(staffValues);
+            
+                var rowIndex = staffValues.map(function(row){
                     return row[0] + " " + row[1];
                 }).indexOf(name);
                                 
-                item.value = Sheets.Spreadsheets.Values.get(staffSSID, staffEmailRange).values[rowIndex].join();
+                Log_('rowIndex: ' + rowIndex);            
+                                
+                if (rowIndex === -1) {
+                  throw new Error('Could not find staff member "' + name + "'");
+                }
+                                
+                item.value = Sheets.Spreadsheets.Values.get(staffSSID, DEFAULT_PULL_RANGE_FOR_USER_EMAILS).values[rowIndex].join();
                 
                 templateData.sponsor.email = item.value;
                 sponsorEmail = item.value;
@@ -1197,180 +1163,198 @@ function onFormSubmit(e) {
         return a.colIndex - b.colIndex;
     });
     
-    // Response sheet update
+    updateResponseSheet();
     
-    rowData = schema.reduce(
-        function(rowData, item) {
-            var cellData = Sheets.newCellData();
-            
-            rowData.values = rowData.values || [];
-            
-            cellData.userEnteredValue = Sheets.newExtendedValue();
-            cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
-            
-            rowData.values.push(cellData);
-            
-            return rowData;
-        }, 
-        Sheets.newRowData()
-    );
-    
-    var responseSheetMaxRows = responseSheet.getMaxRows();
-    
-    PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
-    
-    Sheets.Spreadsheets.batchUpdate(
-        {
-            "requests":[
-                {
-                    "insertDimension": {
-                        "inheritFromBefore":true,
-                        "range":{
-                            "dimension":"ROWS",
-                            "sheetId":responseSheetID,
-                            "startIndex": responseSheetMaxRows - 1,
-                            "endIndex": responseSheetMaxRows
-                        }
-                    }
-                }, 
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":responseSheetID,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 1,
-                            "startRowIndex": responseSheetMaxRows - 1,
-                            "endRowIndex": responseSheetMaxRows
-                        },
-                        "rows":[
-                            {
-                                "values":[
-                                    {
-                                        "userEnteredValue":{
-                                            "numberValue":responseTimestamp
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                },
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":responseSheetID,
-                            "startColumnIndex": 5,
-                            "endColumnIndex": 20,
-                            "startRowIndex": responseSheetMaxRows - 1,
-                            "endRowIndex": responseSheetMaxRows
-                        },
-                        "rows":[
-                            rowData
-                        ]
-                    }
-                }
-            ]
-        },
-        responseSSID
-    );
-    
-    
-    // HootSuite sheet Update
-    var hootSuiteRows = [],
-        numEntries = tier === "GOLD" ? 3 :
-                     tier === "SILVER" ? 2 :
-                     1;
-        
-    for(var i = 1; i <= numEntries; i++) {
-        
-        var rowData = Sheets.newRowData(),
-            cellData = Sheets.newCellData();
-        
-        rowData.values = [];
-        
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.numberValue = toExcelSerialNumberFormat(new Date(eventData.startTime.getTime() - (7 * MILLISECONDS_IN_A_DAY * i)));
-            
-        rowData.values.push(cellData);
-        
-        cellData = Sheets.newCellData();
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.stringValue = templateData.event.about; // + " - " + templateData.event.startTime;
-        
-        rowData.values.push(cellData);
-        
-        cellData = Sheets.newCellData();
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.stringValue = (registrationURL)? registrationURL : "";
-        
-        rowData.values.push(cellData);
-        
-        hootSuiteRows.push(rowData);
-    }
-    
-    var hootsuiteSheetMaxRows = hootsuiteSheet.getMaxRows();
-    
-    Sheets.Spreadsheets.batchUpdate(
-        {
-            "requests":[
-                {
-                    "insertDimension":{
-                        "inheritFromBefore":true,
-                        "range":{
-                            "dimension":"ROWS",
-                            "sheetId":hootsuiteSheetID,
-                            "startIndex":hootsuiteSheetMaxRows,
-                            "endIndex":hootsuiteSheetMaxRows + hootSuiteRows.length
-                        }
-                    }
-                },
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":hootsuiteSheetID,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 3,
-                            "startRowIndex": hootsuiteSheetMaxRows,
-                            "endRowIndex": hootsuiteSheetMaxRows + hootSuiteRows.length
-                        },
-                        "rows": hootSuiteRows
-                    }
-                }
-            ]
-        }, 
-        hootsuiteSSID
-    );
-       
+    updateHootSuite();
+           
     sendConfirmationEmail(sponsorEmail, templateData);
     
     eventData.calendarName = Config.get("GOOGLE_CALENDAR_NAME");
     createCalendarEvent(eventData, templateData);
     
-    emailResourceTeamLeader(templateData);
+    emailResourceTeamLeader_(templateData);
 
     if (TEST_USE_TODOIST) {
 
-      var todoistConfig = {    
-          spreadsheetId:     responseSSID,
-          rowNumber:         responseSheetMaxRows,
-          token:             Config.get("TODOIST_AUTH_TOKEN"),
-          taskTemplateId:    Config.get("TODOIST_TASKS_TEMPLATE_ID"),
-          commentTemplateId: Config.get("TODOIST_COMMENT_TEMPLATE_ID"),
-          staffSheetId:      Config.get("STAFF_DATA_GSHEET_ID"),
-          properties:        PropertiesService.getDocumentProperties(), 
-          lock:              LockService.getDocumentLock()
-      }
-  
-      Todoist.onFormSubmit(todoistConfig);
+        var todoistConfig = {    
+            spreadsheetId:     responseSSID,
+            rowNumber:         responseSheetMaxRows,
+            token:             Config.get("TODOIST_AUTH_TOKEN"),
+            taskTemplateId:    Config.get("TODOIST_TASKS_TEMPLATE_ID"),
+            commentTemplateId: Config.get("TODOIST_COMMENT_TEMPLATE_ID"),
+            staffSheetId:      Config.get("STAFF_DATA_GSHEET_ID"),
+            properties:        PropertiesService.getDocumentProperties(), 
+            lock:              LockService.getDocumentLock()
+        }
+    
+        Todoist.onFormSubmit(todoistConfig);
+        
+        Log_(todoistConfig);
     }
     
-    if (TEST_CHECK_PROMOTION_CALENDAR_) {
-      checkPromotionCalendar_(e);
-    }
+    checkPromotionCalendar_(e);
     
+    Log_('Finished processing form submission');
+    
+    // Private Functions
+    // -----------------
+
+    function updateResponseSheet() {
+    
+        rowData = schema.reduce(
+            function(rowData, item) {
+                var cellData = Sheets.newCellData();
+                
+                rowData.values = rowData.values || [];
+                
+                cellData.userEnteredValue = Sheets.newExtendedValue();
+                cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
+                
+                rowData.values.push(cellData);
+                
+                return rowData;
+            }, 
+            Sheets.newRowData()
+        );
+        
+        var responseSheetMaxRows = responseSheet.getMaxRows();
+        
+        PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
+        
+        Sheets.Spreadsheets.batchUpdate(
+            {
+                "requests":[
+                    {
+                        "insertDimension": {
+                            "inheritFromBefore":true,
+                            "range":{
+                                "dimension":"ROWS",
+                                "sheetId":responseSheetID,
+                                "startIndex": responseSheetMaxRows - 1,
+                                "endIndex": responseSheetMaxRows
+                            }
+                        }
+                    }, 
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":responseSheetID,
+                                "startColumnIndex": 0,
+                                "endColumnIndex": 1,
+                                "startRowIndex": responseSheetMaxRows - 1,
+                                "endRowIndex": responseSheetMaxRows
+                            },
+                            "rows":[
+                                {
+                                    "values":[
+                                        {
+                                            "userEnteredValue":{
+                                                "numberValue":responseTimestamp
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":responseSheetID,
+                                "startColumnIndex": 5,
+                                "endColumnIndex": 20,
+                                "startRowIndex": responseSheetMaxRows - 1,
+                                "endRowIndex": responseSheetMaxRows
+                            },
+                            "rows":[
+                                rowData
+                            ]
+                        }
+                    }
+                ]
+            },
+            responseSSID
+        );
+        
+        Log_('Written to response sheet "' + responseSSID + '"');
+        
+    } // onFormSubmit.updateResponseSheet()
+
+    function updateHootSuite() {
+    
+        // HootSuite sheet Update
+        var hootSuiteRows = [],
+            numEntries = tier === "GOLD" ? 3 :
+                         tier === "SILVER" ? 2 :
+                         1;
+            
+        for(var i = 1; i <= numEntries; i++) {
+            
+            var rowData = Sheets.newRowData(),
+                cellData = Sheets.newCellData();
+            
+            rowData.values = [];
+            
+            cellData.userEnteredValue = Sheets.newExtendedValue();
+            cellData.userEnteredValue.numberValue = toExcelSerialNumberFormat(new Date(eventData.startTime.getTime() - (7 * MILLISECONDS_IN_A_DAY * i)));
+                
+            rowData.values.push(cellData);
+            
+            cellData = Sheets.newCellData();
+            cellData.userEnteredValue = Sheets.newExtendedValue();
+            cellData.userEnteredValue.stringValue = templateData.event.about; // + " - " + templateData.event.startTime;
+            
+            rowData.values.push(cellData);
+            
+            cellData = Sheets.newCellData();
+            cellData.userEnteredValue = Sheets.newExtendedValue();
+            cellData.userEnteredValue.stringValue = (registrationURL)? registrationURL : "";
+            
+            rowData.values.push(cellData);
+            
+            hootSuiteRows.push(rowData);
+        }
+        
+        var hootsuiteSheetMaxRows = hootsuiteSheet.getMaxRows();
+        
+        Sheets.Spreadsheets.batchUpdate(
+            {
+                "requests":[
+                    {
+                        "insertDimension":{
+                            "inheritFromBefore":true,
+                            "range":{
+                                "dimension":"ROWS",
+                                "sheetId":hootsuiteSheetID,
+                                "startIndex":hootsuiteSheetMaxRows,
+                                "endIndex":hootsuiteSheetMaxRows + hootSuiteRows.length
+                            }
+                        }
+                    },
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":hootsuiteSheetID,
+                                "startColumnIndex": 0,
+                                "endColumnIndex": 3,
+                                "startRowIndex": hootsuiteSheetMaxRows,
+                                "endRowIndex": hootsuiteSheetMaxRows + hootSuiteRows.length
+                            },
+                            "rows": hootSuiteRows
+                        }
+                    }
+                ]
+            }, 
+            hootsuiteSSID
+        );
+        
+        Log_('Written to hootsuite sheet "' + hootsuiteSSID + '"');
+            
+    } // onFormSubmit.updateHootSuite()
+
 } // onFormSubmit()
 
 /**
@@ -1380,6 +1364,11 @@ function onFormSubmit(e) {
  * @param {Object} templateData   - Data to be passed to email template
  */
 function sendConfirmationEmail(recipientEmail, templateData) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
+
     var template = HtmlService.createTemplateFromFile('confirmation_email_template');
     
     Object.assign(template, templateData);
@@ -1437,10 +1426,13 @@ function createCalendarEvent(eventData, templateData) {
  *
  * @param {Object} templateData   - Data to be passed to email template
  */
-function emailResourceTeamLeader(templateData) {
+function emailResourceTeamLeader_(templateData) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
 
     var template = HtmlService.createTemplateFromFile('email_resource_team_leader_template'),
-//        propertyCache = new PropertyCache(),
         ss = SpreadsheetApp.openById(Config.get("STAFF_DATA_GSHEET_ID"));
     
     Object.assign(template, templateData);
@@ -1489,6 +1481,11 @@ function validateFormResponse(data) {
  * @param data {Object} Data to inject into the email template
  */
 function sendErrorReportEmailToRespondent(recipientEmail, data) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
+
     var template = HtmlService.createTemplateFromFile('error_report_template');
     
     Object.assign(template, data);

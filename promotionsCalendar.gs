@@ -6,6 +6,10 @@
 
 function checkPromotionCalendar_(e) {
 
+  if (!TEST_CHECK_PROMOTION_CALENDAR) {
+    return;
+  }
+
   var isRunFromTrigger = e.hasOwnProperty('triggerUid');
   var responsesSpreadsheet = SpreadsheetApp.openById(Config.get('PROMOTION_FORM_RESPONSES_SHEET_ID'));
   
@@ -31,12 +35,12 @@ function checkPromotionCalendar_(e) {
       'Expected to find GSheet "' + promotionDeadlinesCalendarId + '"');
   }
   
-  var calendarSheet = calendarSS.getSheetByName(PROMOTION_CALENDAR_SHEET_NAME_); 
+  var calendarSheet = calendarSS.getSheetByName(PROMOTION_CALENDAR_SHEET_NAME); 
   
   if (!calendarSheet) {
   
     throw new Error (
-      'Unable to find sheet named "' + PROMOTION_CALENDAR_SHEET_NAME_ + '" ' + 
+      'Unable to find sheet named "' + PROMOTION_CALENDAR_SHEET_NAME + '" ' + 
       'on ' + calendarSS.getName() + ' spreadsheet');      
   }
   
@@ -112,7 +116,7 @@ function checkPromotionCalendar_(e) {
       // compare eventTitle and calendarEventTitle if dates are within the allowed range
       var dayDiff = Utils.DateDiff.inDays(calendarEventDate, eventDate);
       
-      if (dayDiff <= MAX_EVENT_DATE_DIFF_) {
+      if (dayDiff <= MAX_EVENT_DATE_DIFF) {
       
         // compare the longer list to the shorter list
         var shorterList = (eventTitleWords.length <= calendarEventTitleWords.length) ? eventTitleWords : calendarEventTitleWords;
@@ -129,7 +133,7 @@ function checkPromotionCalendar_(e) {
         
         var matchPercent = matches / shorterList.length;
         
-        if (matchPercent > MATCH_THRESHOLD_PERCENT_) {
+        if (matchPercent > MATCH_THRESHOLD_PERCENT) {
         
           recordsFound.push([
             'Title on this spreadsheet: ' + eventTitle,
@@ -142,7 +146,7 @@ function checkPromotionCalendar_(e) {
             'Date difference (# days): ' + dayDiff
           ]);
                     
-          if (TEST_WRITE_TO_CALENDAR_) {
+          if (TEST_WRITE_TO_CALENDAR) {
             calendarSheet.getRange(j+1,7).setValue('Yes');
           }
           
@@ -154,17 +158,14 @@ function checkPromotionCalendar_(e) {
     
   } // next response sheet value
   
-  Log_(errors)
-  Log_(warnings)
+  Log_(errors);
+  Log_(warnings);
+  Log_(recordsFound);
     
   if (!isRunFromTrigger) { // build response html only if run manually
   
     // if 0, No Records; if 1, 1 Record; else n Records - just to be gramatically more preciserer
     var html = '<h1>' + (recordsFound.length === 0 ? 'No' : recordsFound.length) + ' Matching Record' + (recordsFound.length === 1 ? '' : 's') + '</h1>';
-    
-    if (TEST_CHECK_PROMOTION_CALENDAR_TEST_MODE_) {
-      html += '<h3 style="color:red">TEST MODE - NO CHANGES MADE</h3>'
-    }
     
     for (var r in recordsFound) {
     
@@ -198,5 +199,7 @@ function checkPromotionCalendar_(e) {
     SpreadsheetApp.getUi().showModalDialog(modal, 'Results');
     
   } // !isRunFromTrigger
+  
+  Log_('Checked promotion calendar'); 
   
 } // checkPromotionCalendar_()

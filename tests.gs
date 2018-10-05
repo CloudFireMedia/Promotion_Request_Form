@@ -1,5 +1,9 @@
 function Log_(message) {
 
+  if (!TEST_ENABLE_LOGGING) {
+    return;
+  }
+
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
