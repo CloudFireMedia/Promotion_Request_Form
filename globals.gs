@@ -1,7 +1,42 @@
 /** Global properties and config options */
 
-
 Object.defineProperties(this, {
+
+    "SCRIPT_NAME":{
+        value:"Promotion_Request_Form",
+    },
+    "SCRIPT_VERSION":{
+        value:"v1.4",
+    },
+
+    "TEST_ENABLE_LOGGING":{
+        value:true,
+    },
+    "TEST_USE_TODOIST":{
+        value:true,
+    },
+    "TEST_CHECK_PROMOTION_CALENDAR":{
+        value:true,
+    },
+    "TEST_WRITE_TO_CALENDAR":{
+        value:true,
+    },
+    "TEST_SEND_EMAILS":{
+        value:true,
+    },
+    
+    "DATA_SHEET_NAME":{
+        value:'Incoming_Data',
+    },
+    "PROMOTION_CALENDAR_SHEET_NAME":{
+        value:'Communications Director Master',
+    },
+    "MATCH_THRESHOLD_PERCENT":{
+        value:0.75,  // fuzzy logic matching
+    },
+    "MAX_EVENT_DATE_DIFF":{
+        value:10,
+    },
     "DEFAULT_PULL_RANGE_FOR_USER_NAMES":{
         "value":"Staff!A3:B"
     },

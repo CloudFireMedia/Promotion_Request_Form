@@ -1,15 +1,5 @@
 /** Custom utility scripts bundled as modules */
 
-
-// Note: A Module is an organizational unit that groups a set of related 
-//       functions. They are created using self-invoked functions of the
-//       form:
-//       
-//           (function(context) {
-//               ---function definitions---
-//               ...
-//           })(this);
-
 /**
  * PropertyCache module.
  * 
@@ -22,6 +12,7 @@
  * All property values are processed as JSON serialized strings.
  *
  */
+ 
 (function(context) {
     
     /**

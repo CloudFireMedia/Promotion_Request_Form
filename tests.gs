@@ -1,17 +1,36 @@
+// Logging
+// -------
+
 function Log_(message) {
+
+  if (!TEST_ENABLE_LOGGING) {
+    return;
+  }
 
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
 
   SpreadsheetApp
-    .openById(CONFIG.FILES.RESPONSES_SPREADSHEET_ID)
+    .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
     .getSheetByName('Log')
     .appendRow([new Date() + ' - ' + message])
 }
 
+// Tests
+// -----
+
 function test() {
   SpreadsheetApp.openById('1oO3kz6fQP74TAzW3JXlpLQR23mn5uAQfd-fGcakCtId')
+}
+
+function test_pollStaffSpreadsheet() {
+  pollStaffSpreadsheet_()
+}
+
+function test_checkPromotionCalendar() {
+  checkPromotionCalendar_()
+  return
 }
 
 function test_Todoist_onFormSubmit() {
@@ -35,6 +54,9 @@ function test_Todoist_onFormSubmit() {
 
     Todoist.onFormSubmit(todoistConfig)
 }
+
+// Config
+// ------
 
 function test_dumpConfig() {
 
