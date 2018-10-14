@@ -1,3 +1,9 @@
+// v1.4
+// ----
+//
+// - Made (back) into an add-on
+// - Use Config lib
+
 // v1.3
 // ----
 //

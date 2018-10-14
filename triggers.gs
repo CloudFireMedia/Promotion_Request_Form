@@ -3,170 +3,23 @@
 /** Force enable drive scope */
 /** Drive.Files.list(); */  
 
-/**
- * doGet needs to be implemented before the script can be registered in the Chrome web store.
- * 
- */
-function doGet(e) {
-
-  return HtmlService.createHtmlOutputFromFile('index').addMetaTag("google-site-verification","SFnR1Fse7VXgq0XQxZzVN8TaOOBCMT-j5i42CkD9Fu8");
+function onInstall() {
   
-  // return ContentService.createTextOutput(JSON.stringify({'status':'SUCCESS'})).setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-
-  return HtmlService.createHtmlOutputFromFile('index').addMetaTag("google-site-verification","SFnR1Fse7VXgq0XQxZzVN8TaOOBCMT-j5i42CkD9Fu8");
-}
-
-/**
- * Add-on specific trigger. Invoked on install.
- *
- * @param {Event} e - Event object
- */
-function onInstall(e) {
-    onOpen(e);
-}
-
-/**
- * onOpen trigger.
- *
- * @param {Event} e - Event object.
- */
-function onOpen(e) {
-
-    // CCN Tool
-    var menu = FormApp.getUi().createAddonMenu();
-    
-    if (e.authMode === ScriptApp.AuthMode.NONE) {
-    
-        menu.addItem("Run Setup", "startSetup");
-        
-    } else {
-        
-        menu.addItem("Run Setup", "startSetup")
-            .addSeparator()
-            .addItem("Map Staff Spreadsheet",           "mapToStaffSpreadsheet")
-            .addItem("Map Responses Spreadsheet",       "mapToResponsesSpreadsheet")
-            .addItem("Set Target Response Sheet",       "setTargetSheetForResponses")
-            .addItem("Set Pull Range for Names",        "setPullRangeForUserNames")
-            .addItem("Set Pull Range for Emails",       "setPullRangeForUserEmails")
-            .addItem("Map HootSuite Spreadsheet",       "mapToHootSuiteSpreadsheet")
-            .addItem("Set Target HootSuite Sheet",      "setTargetSheetForHootSuite")
-            .addItem("Set Target Calendar",             "setTargetCalendar")
-            .addItem("Set Todoist Comment Template",    "setTodoistCommentTemplate")
-            .addItem("Set Todoist Tasks Template",      "setTodoistTasksTemplate")
-            .addItem("Set Todoist Auth Token",          "setTodoistAuthToken")
-            .addItem("Show settings",                   "showCache")            
-            //.addItem("Reset to defaults",               "resetToDefaults")
-    }
-    
-    menu.addToUi();
-   
-}
-
-/** Creates prompt to map form to staff spreadsheet id */
-function mapToStaffSpreadsheet() {
-    mapToSpreadsheet("MAP STAFF SPREADSHEET", "Please enter (or paste) the id of the staff spreadsheet.", "STAFF_SPREADSHEET_ID");
-}
-
-/** Creates prompt to map form to responses spreadsheet id */
-function mapToResponsesSpreadsheet() {
-    mapToSpreadsheet("MAP RESPONSES SPREADSHEET", "Please enter (or paste) the id of the responses spreadsheet.", "RESPONSES_SPREADSHEET_ID");
-}
-
-/** Create prompt to map form to HootSuite spreadsheet id */
-function mapToHootSuiteSpreadsheet() {
-    mapToSpreadsheet("MAP HOOTSUITE SPREADSHEET", "Please enter (or paste) the id of the Hootsuite spreadsheet,", "HOOTSUITE_SPREADSHEET_ID");
-}
-
-/**
- * Begin setup flow, triggering a series of prompts
- * instructing the user to set requested parameters.
- *
- */
-function startSetup() {
-
-    var ui = FormApp.getUi(),
-        result = ui.alert(
-            "SETUP",
-            "This form must be configured before use. You'll be \npresented with a series of prompts to guide you.\n",
-            ui.ButtonSet.OK
-        );
+  var propertyCache = new PropertyCache;
   
-    if (result === ui.Button.OK) {
-        
-        clearCache_();
-        
-        // chained function invocations per setup step
-        
-        mapToSpreadsheet("MAP STAFF SPREADSHEET", "Please enter (or paste) the id of the staff spreadsheet.", "STAFF_SPREADSHEET_ID", function() {
-        
-            setPullRangeForUserNames(function() {
-            
-                setPullRangeForUserEmails(function() {
-                
-                    mapToSpreadsheet("MAP RESPONSES SPREADSHEET", "Please enter (or paste) the id of the responses spreadsheet.", "RESPONSES_SPREADSHEET_ID", function() {
-                    
-                        setTargetSheetForResponses(function() {
-                        
-                            mapToSpreadsheet("MAP HOOTSUITE SPREADSHEET", "Please enter (or paste) the id of the Hootsuite spreadsheet.", "HOOTSUITE_SPREADSHEET_ID", function(){
-                            
-                                setTargetSheetForHootSuite(function() {
-                                
-                                    setTargetCalendar(function() {
-                                    
-                                        setTodoistAuthToken(function(){
-
-                                            setTodoistTasksTemplate(function(){
-
-                                                setTodoistCommentTemplate(function(){
-                                                
-                                                    initialize(function(){
-                                                  
-                                                        FormApp.getUi().alert("SETUP COMPLETE!");
-                                                        return;
-                                                    })                  
-                                                })
-                                            })
-                                        })
-                                    })                    
-                                })
-                            })
-                        })
-                    })
-                })
-            })
-        });
-        
-    }
-    
-    return;
-    
-    
-}
-
-/** Clears all cache settings */
-function clearCache_() {
-    var propertyCache = new PropertyCache(),
-        staffSSID = propertyCache.get("STAFF_SPREADSHEET_ID");
-    
-    if (staffSSID) {
-        propertyCache.remove(staffSSID, true);
-    }
-    
-    propertyCache.remove("STAFF_SPREADSHEET_ID", true);
-    propertyCache.remove("RESPONSES_SPREADSHEET_ID", true);
-    propertyCache.remove("RESPONSE_SHEET_NAME", true);
-    propertyCache.remove("PULL_RANGE_FOR_USER_NAMES", true);
-    propertyCache.remove("PULL_RANGE_FOR_USER_EMAILS", true);
-    propertyCache.remove("HOOTSUITE_SPREADSHEET_ID", true);
-    propertyCache.remove("HOOTSUITE_SHEET_NAME", true);
-    propertyCache.remove("CALENDAR_NAME", true);
-    propertyCache.remove("TODOIST_AUTH_TOKEN", true);
-    propertyCache.remove("TODOIST_TASKS_TEMPLATE_ID", true);
-    propertyCache.remove("TODOIST_COMMENT_TEMPLATE_ID", true);
-    
+  // creates a time-based trigger; trigger handler invokes polling on staff spreadsheet to
+  // update names in form as well as updates date patterns
+  // Note: Time intervals cannot be lower that one hour for add-ons. Script will throw an error otherwise.
+  //       Alternative is to use an external cron service to trigger updates via web app.
+  
+  trigger = ScriptApp.newTrigger("updateForm").timeBased().everyHours(1).create();
+  propertyCache.put(UPDATE_FORM_CONTEXT_ID, trigger.getUniqueId(), true);
+  
+  // create an event-based trigger for onFormSubmit
+  trigger = ScriptApp.newTrigger("onFormSubmit").forForm(FormApp.getActiveForm().getId()).onFormSubmit().create();
+  propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
+  
+  updateForm(null);
 }
 
 /** Shows all of the cache settings */
@@ -174,459 +27,19 @@ function showCache() {
     var propertyCache = new PropertyCache(),
 
         prompt =
-            "Staff Spreadsheet ID: "             + propertyCache.get("STAFF_SPREADSHEET_ID") + "\n" +
-            "Responses Spreadsheet ID: "         + propertyCache.get("RESPONSES_SPREADSHEET_ID") + "\n" +
-            "Responses Sheet name: "             + (propertyCache.get("RESPONSE_SHEET_NAME") || DEFAULT_RESPONSE_SHEET_NAME) + "\n" +
-            "Pull range for users names: "       + (propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES) + "\n" +
-            "Pull range for users emails: "      + (propertyCache.get("PULL_RANGE_FOR_USER_EMAILS") || DEFAULT_PULL_RANGE_FOR_USER_EMAILS) + "\n" +
-            "Hootsuite Spreadsheet ID: "         + propertyCache.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
-            "Hootsuite Sheet Name: "             + (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME) + "\n" +
-            "Calendar Name: "                    + propertyCache.get("CALENDAR_NAME") + "\n" +
-            "Todoist Auth token: "               + propertyCache.get("TODOIST_AUTH_TOKEN") + "\n" +
-            "Todoist Tasks Template CSV ID: "    + propertyCache.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
-            "Todoist Comment Template GDoc ID: " + propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID")
+            "Staff Spreadsheet ID: "             + Config.get("STAFF_DATA_GSHEET_ID") + "\n" +
+            "Responses Spreadsheet ID: "         + Config.get("PROMOTION_FORM_RESPONSES_GSHEET_ID") + "\n" +
+            "Responses Sheet name: "             + DEFAULT_RESPONSE_SHEET_NAME + "\n" +
+            "Pull range for users names: "       + DEFAULT_PULL_RANGE_FOR_USER_NAMES + "\n" +
+            "Pull range for users emails: "      + DEFAULT_PULL_RANGE_FOR_USER_EMAILS + "\n" +
+            "Hootsuite Spreadsheet ID: "         + Config.get("HOOTSUITE_SPREADSHEET_ID") + "\n" +
+            "Hootsuite Sheet Name: "             + DEFAULT_HOOTSUITE_SHEET_NAME + "\n" +
+            "Calendar Name: "                    + Config.get("GOOGLE_CALENDAR_NAME") + "\n" +
+            "Todoist Auth token: "               + Config.get("TODOIST_AUTH_TOKEN") + "\n" +
+            "Todoist Tasks Template CSV ID: "    + Config.get("TODOIST_TASKS_TEMPLATE_ID") + "\n" +
+            "Todoist Comment Template GDoc ID: " + Config.get("TODOIST_COMMENT_TEMPLATE_ID")
 
     FormApp.getUi().alert(prompt)
-  
-}
-
-/**
- * Maps the form to a spreadsheet; stores the spreadsheet
- * id as a property accessible to the scripts bound to 
- * the form.
- *
- * @param {String} title       - Title of the prompt.
- * @param {String} prompt      - Prompt statement.
- * @param {String} key         - Key to store spreadsheet id.
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function mapToSpreadsheet(title, prompt, key, callback) {
-    var propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            title,
-            prompt,
-            ui.ButtonSet.OK
-        );
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        try {
-          
-            var id = result.getResponseText().trim()
-            var ss = SpreadsheetApp.openById(id);
-            
-            propertyCache.put(key, ss.getId(), true);
-            callback && callback();
-            
-        } catch(e) {
-        
-            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
-                        
-                result = ui.alert(
-                    "Error accessing Spreadsheet (" +  title + ")! \nTry again.",
-                    ui.ButtonSet.OK
-                );
-                
-                if (result === ui.Button.OK) {
-                    mapToSpreadsheet(title, prompt, key, callback);
-                }
-                
-            } else {
-            
-              throw e
-            }
-            
-        }
-        
-    }
-    
-}
-
-/** 
- * Create prompt to map form to Todoist comment template GDoc id 
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations
- */
-function setTodoistCommentTemplate(callback) {
-    var propertyCache = new PropertyCache(),
-        key = "TODOIST_COMMENT_TEMPLATE_ID",
-        title = "Todoist Comment Template GDoc ID",
-        prompt = "Please enter (or paste) the id of the Todoist Comment Template GDoc.",
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            title,
-            Utilities.formatString(prompt),
-            ui.ButtonSet.OK
-        );
-        
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-
-        try {
-          
-            var id = result.getResponseText().trim()
-            var gdoc = DocumentApp.openById(id);
-            
-            propertyCache.put(key, gdoc.getId(), true);
-            callback && callback();
-            
-        } catch(e) {
-        
-            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
-                        
-                var result = ui.alert(
-                    "Error accessing " +  title + "! \nTry again.",
-                    ui.ButtonSet.OK
-                );
-                
-                if (result === ui.Button.OK) {
-                    setTodoistCommentTemplate(callback);
-                }
-                
-            } else {
-            
-              throw e
-            }
-            
-        }
-        
-    }
-    
-}
-
-/** 
- * Create prompt to set Todoist tasks template CSV ID 
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations
- */
-function setTodoistTasksTemplate(callback) {
-    var propertyCache = new PropertyCache(),
-        key = "TODOIST_TASKS_TEMPLATE_ID",
-        title = "MAP TODOIST TASK TEMPLATE",
-        prompt = "Please enter (or paste) the id of the Todoist tasks template CSV.",
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            title,
-            Utilities.formatString(prompt),
-            ui.ButtonSet.OK
-        );
-        
-    if (result.getSelectedButton() === ui.Button.OK) {
-
-        try {
-          
-            var id = result.getResponseText().trim()
-            var file = DriveApp.getFileById(id);
-            
-            propertyCache.put(key, file.getId(), true);
-            callback && callback();
-            
-        } catch(e) {
-        
-            if (e.message.indexOf("Bad value ") !== -1 || e.message.indexOf("is missing (perhaps it was deleted?)") !== -1) {
-                        
-                var result = ui.alert(
-                    "Error accessing " +  title + "! \nTry again.",
-                    ui.ButtonSet.OK
-                );
-                
-                if (result === ui.Button.OK) {
-                    setTodoistTasksTemplate(callback);
-                }
-                
-            } else {
-            
-              throw e
-            }
-            
-        }
-        
-    }
-    
-}
-    
-/**
- * Sets the desired pull range for user names.
- * Defaults to the constant DEFAULT_PULL_RANGE_FOR_USER_NAMES.
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setPullRangeForUserNames(callback) {
-
-    var range,
-        propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET PULL RANGE FOR USER NAMES",
-            Utilities.formatString("Enter (or paste) the desired range to\npull user names.\n\nOr leave it empty to use the\ndefault range (%s)", DEFAULT_PULL_RANGE_FOR_USER_NAMES),
-            ui.ButtonSet.OK
-        );
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        range = result.getResponseText().trim();
-        
-        if (range !== "") propertyCache.put("PULL_RANGE_FOR_USER_NAMES",range, true);
-        
-        if (range === "" && propertyCache.get("PULL_RANGE_FOR_USER_NAMES")) {
-            propertyCache.remove("PULL_RANGE_FOR_USER_NAMES", true);
-        }
-                
-        callback && callback();
-        
-    }
-    
-}
-
-/**
- * Sets the desired pull range for user emails.
- * Defaults to the constant DEFAULT_PULL_RANGE_FOR_USER_EMAILS.
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setPullRangeForUserEmails(callback) {
-
-    var range,
-        propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET PULL RANGE FOR USER EMAILS",
-            Utilities.formatString("Enter (or paste) the desired range to\npull user emails.\n\nOr leave it empty to use the\ndefault range (%s)", DEFAULT_PULL_RANGE_FOR_USER_EMAILS),
-            ui.ButtonSet.OK
-        );
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var range = result.getResponseText().trim();
-        
-        if (range !== "") propertyCache.put("PULL_RANGE_FOR_USER_EMAILS", range, true);
-        
-        if (range === "" && propertyCache.get("PULL_RANGE_FOR_USER_EMAILS")) {
-            propertyCache.remove("PULL_RANGE_FOR_USER_EMAILS", true);
-        }
-                
-        callback && callback();
-        
-    }
-
-
-}
-
-/**
- * Sets the response sheet name.
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setTargetSheetForResponses(callback) {
-    var sheetName,
-        propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET TARGET SHEET FOR RESPONSES",
-            Utilities.formatString("Enter (or paste) the name of the target sheet.\n\n Or leave it empty to use the \ndefault response sheet (%s)", DEFAULT_RESPONSE_SHEET_NAME),
-            ui.ButtonSet.OK
-        )
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var sheetName = result.getResponseText().trim();
-        
-        if (sheetName !== "") propertyCache.put("RESPONSE_SHEET_NAME", sheetName, true);
-        
-        if (sheetName === "" && propertyCache.get("RESPONSE_SHEET_NAME")) {
-            propertyCache.remove("RESPONSE_SHEET_NAME", true);
-        }
-                
-        
-        callback && callback();
-    }
-    
-}
-
-/**
- * Sets the hootsuite sheet name.
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setTargetSheetForHootSuite(callback) {
-    var sheetName,
-        propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET TARGET SHEET FOR HOOTSUITE",
-            Utilities.formatString("Enter (or paste) the name of the target sheet.\n\n Or leave it empty to use the \ndefault sheet name (%s)", DEFAULT_HOOTSUITE_SHEET_NAME),
-            ui.ButtonSet.OK
-        )
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var sheetName = result.getResponseText().trim();
-        
-        if (sheetName !== "") propertyCache.put("HOOTSUITE_SHEET_NAME", sheetName, true);
-        
-        if (sheetName === "" && propertyCache.get("HOOTSUITE_SHEET_NAME")) {
-            propertyCache.remove("HOOTSUITE_SHEET_NAME", true);
-        }
-                
-        
-        callback && callback();
-    }
-    
-}
-
-/**
- * Sets target Calendar
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setTargetCalendar(callback) {
-    var sheetName,
-        propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET TARGET CALENDAR",
-            Utilities.formatString("Enter (or paste) the name of the target calendar.\n\n Or leave it empty to use your \ndefault calendar."),
-            ui.ButtonSet.OK
-        )
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var sheetName = result.getResponseText().trim();
-        
-        if (sheetName !== "") propertyCache.put("CALENDAR_NAME", sheetName, true);
-        
-        if (sheetName === "" && propertyCache.get("CALENDAR_NAME")) {
-            propertyCache.remove("CALENDAR_NAME", true);
-        }
-                
-        
-        callback && callback();
-    }
-    
-}
-
-/**
- * Sets Todoist Auth Token
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function setTodoistAuthToken(callback) {
-    var propertyCache = new PropertyCache(),
-        ui = FormApp.getUi(),
-        result = ui.prompt(
-            "SET TODOIST AUTH TOKEN",
-            Utilities.formatString("Enter (or paste) the authorisation token for the Todoist account."),
-            ui.ButtonSet.OK
-        )
-    
-    if (result.getSelectedButton() === ui.Button.OK) {
-        
-        var token = result.getResponseText().trim();
-        
-        if (token !== "") propertyCache.put("TODOIST_AUTH_TOKEN", token, true);
-        
-        if (token === "" && propertyCache.get("TODOIST_AUTH_TOKEN")) {
-            propertyCache.remove("TODOIST_AUTH_TOKEN", true);
-        }
-                
-        
-        callback && callback();
-    }
-    
-    
-}
-
-/** 
- * Initialize triggers.
- *
- * @param {Function} callback  - An optional callback to be invoked when the 
- *                               dialog recieves confirmation. Used to chain
- *                               multiple invocations.
- */
-function initialize(callback) {
-    
-    var trigger,
-        response,
-        result,
-        propertyCache = new PropertyCache(),
-        triggerIDs = [
-            propertyCache.get(UPDATE_FORM_CONTEXT_ID),
-            propertyCache.get(FORM_SUBMIT_CONTEXT_ID)
-        ].filter(function(id) {
-            return id !== null;
-        });
-    
-    // Fetch metadata info on form to determine if current user owns the form
-    
-    var url = Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=ownedByMe", FormApp.getActiveForm().getId())
-    var options = {
-        "headers":{
-            "Authorization":"Bearer " + ScriptApp.getOAuthToken()
-        },
-        "muteHttpExceptions": true
-    }
-
-    response = UrlFetchApp.fetch(url, options);
-    
-    if (response.getResponseCode() !== 200) {
-      throw new Error(response.getContentText())
-    }
-    
-    result = JSON.parse(response);
-    
-    // Only allow owner of the form to create/destroy these triggers
-    if (result.ownedByMe) {
-        
-        // delete existing "pollStaffSpreadsheet" and "onFormSubmit" triggers
-        ScriptApp.getProjectTriggers().forEach(function(trigger) {
-            //var trigger = ScriptApp.getProjectTriggers()[0];
-            if(trigger.getHandlerFunction() === "updateForm" || trigger.getHandlerFunction() === "onFormSubmit") {
-                
-                ScriptApp.deleteTrigger(trigger);
-                                        
-            }
-                
-        });
-                
-        // creates a time-based trigger; trigger handler invokes polling on staff spreadsheet to
-        // update names in form as well as updates date patterns
-        // Note: Time intervals cannot be lower that one hour for add-ons. Script will throw an error otherwise.
-        //       Alternative is to use an external cron service to trigger updates via web app.
-        
-        trigger = ScriptApp.newTrigger("updateForm").timeBased().everyHours(1).create();
-        propertyCache.put(UPDATE_FORM_CONTEXT_ID, trigger.getUniqueId(), true);
-        
-        // create an event-based trigger for onFormSubmit
-        trigger = ScriptApp.newTrigger("onFormSubmit").forForm(FormApp.getActiveForm().getId()).onFormSubmit().create();
-        propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
-        
-        updateForm(null);
-    
-    } else {
-    
-      FormApp.getUi().alert('Only the owner of the form can start the triggers required to process form submissions')
-    }
-        
-    callback && callback();
 }
 
 /**
@@ -650,7 +63,7 @@ function pollStaffSpreadsheet_() {
     // fetch metadata for spreadsheet
     var cached,
         propertyCache = new PropertyCache(),
-        ssID = propertyCache.get("STAFF_SPREADSHEET_ID"),
+        ssID = Config.get("STAFF_DATA_GSHEET_ID"),
         response = UrlFetchApp.fetch(
             Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=modifiedTime,version", ssID),
             {
@@ -669,24 +82,8 @@ function pollStaffSpreadsheet_() {
     if (!cached || cached.modifiedTime !== result.modifiedTime || cached.version !== result.version ) {
     
         propertyCache.put(ssID, result);
-        updateNamePatternForSponsors_();
-        
+        updateNamePatternForSponsors_(ssID);
     }
-    
-}
-
-/**
- * Removes the custom properties set for pull ranges.
- * System will fallback on defaults.
- *
- */
-function resetToDefaults() {
-    var propertyCache = new PropertyCache(),
-        staffSSID = propertyCache.get("STAFF_SPREADSHEET_ID");
-    
-    propertyCache.remove(staffSSID, true);
-    propertyCache.remove("PULL_RANGE_FOR_USER_NAMES", true);
-    propertyCache.remove("PULL_RANGE_FOR_USER_EMAILS", true);
     
 }
 
@@ -695,9 +92,8 @@ function resetToDefaults() {
  * corresponding form item.
  *
  */
-function updateNamePatternForSponsors_() {
-    var propertyCache = new PropertyCache(),
-        ss = SpreadsheetApp.openById(propertyCache.get("STAFF_SPREADSHEET_ID")),
+function updateNamePatternForSponsors_(ssID) {
+    var ss = SpreadsheetApp.openById(ssID),
         nameTextItem = FormApp.getActiveForm().getItemById(FORM_NAME_ITEM_ID).asTextItem(),
         pattern = "",
         validationBuilder,
@@ -705,7 +101,7 @@ function updateNamePatternForSponsors_() {
     
     nameTextItem.clearValidation();
     
-    values = ss.getRange(propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES).getValues();
+    values = ss.getRange(DEFAULT_PULL_RANGE_FOR_USER_NAMES).getValues();
     
     pattern = "(" 
         + values.map(function(row) {
@@ -936,30 +332,23 @@ function isLeapYear(year) {
  */
 function onFormSubmit(e) {
 
-    Log_(e)
-    
-    var propertyCache = new PropertyCache(),
+    Log_(e);
+
+    var hootsuiteSSID = Config.get("HOOTSUITE_SPREADSHEET_ID"),
+        hootsuiteSheet = SpreadsheetApp.openById(hootsuiteSSID).getSheetByName(DEFAULT_HOOTSUITE_SHEET_NAME),
+        hootsuiteSheetID = hootsuiteSheet.getSheetId(),  
         
-        hootsuiteSSID = propertyCache.get("HOOTSUITE_SPREADSHEET_ID"),
-        hootsuiteSheetName = (propertyCache.get("HOOTSUITE_SHEET_NAME") || DEFAULT_HOOTSUITE_SHEET_NAME),
-        
-        hootsuiteSheet = SpreadsheetApp.openById(hootsuiteSSID).getSheetByName(hootsuiteSheetName),
-        hootsuiteSheetID = hootsuiteSheet.getSheetId(),
-        
-        responseSSID = propertyCache.get("RESPONSES_SPREADSHEET_ID"),
-        responseSheetName = (propertyCache.get("RESPONSE_SHEET_NAME") || DEFAULT_RESPONSE_SHEET_NAME),
-        
-        responseSheet = SpreadsheetApp.openById(responseSSID).getSheetByName(responseSheetName),
+        responseSSID = Config.get("PROMOTION_FORM_RESPONSES_GSHEET_ID"),
+        responseSheet = SpreadsheetApp.openById(responseSSID).getSheetByName(DEFAULT_RESPONSE_SHEET_NAME),
         responseSheetID = responseSheet.getSheetId(),
         
-        staffSSID = propertyCache.get("STAFF_SPREADSHEET_ID"),
-        staffNameRange = (propertyCache.get("PULL_RANGE_FOR_USER_NAMES") || DEFAULT_PULL_RANGE_FOR_USER_NAMES),
-        staffEmailRange = (propertyCache.get("PULL_RANGE_FOR_USER_EMAILS") || DEFAULT_PULL_RANGE_FOR_USER_EMAILS),
+        staffSSID = Config.get("STAFF_DATA_GSHEET_ID"),
                 
         formResponse = e.response,
         form = e.source,
         
         rowData,
+        responseSheetMaxRows,
         
         schema = [
 			{"id":FORM_TIER_SELECTION_ITEM_ID, "colIndex":6},
@@ -1046,12 +435,21 @@ function onFormSubmit(e) {
                 templateData.sponsor.name = name;
                 break;
                 
-            case 5:    // Set Email
-                var rowIndex = Sheets.Spreadsheets.Values.get(staffSSID, staffNameRange).values.map(function(row){
+            case 5:    // Set Email            
+                var staffValues = Sheets.Spreadsheets.Values.get(staffSSID, DEFAULT_PULL_RANGE_FOR_USER_NAMES).values;
+                Log_(staffValues);
+            
+                var rowIndex = staffValues.map(function(row){
                     return row[0] + " " + row[1];
                 }).indexOf(name);
                                 
-                item.value = Sheets.Spreadsheets.Values.get(staffSSID, staffEmailRange).values[rowIndex].join();
+                Log_('rowIndex: ' + rowIndex);            
+                                
+                if (rowIndex === -1) {
+                  throw new Error('Could not find staff member "' + name + "'");
+                }
+                                
+                item.value = Sheets.Spreadsheets.Values.get(staffSSID, DEFAULT_PULL_RANGE_FOR_USER_EMAILS).values[rowIndex].join();
                 
                 templateData.sponsor.email = item.value;
                 sponsorEmail = item.value;
@@ -1220,176 +618,198 @@ function onFormSubmit(e) {
         return a.colIndex - b.colIndex;
     });
     
-    // Response sheet update
+    updateResponseSheet();
     
-    rowData = schema.reduce(
-        function(rowData, item) {
-            var cellData = Sheets.newCellData();
+    updateHootSuite();
+           
+    sendConfirmationEmail(sponsorEmail, templateData);
+    
+    eventData.calendarName = Config.get("GOOGLE_CALENDAR_NAME");
+    createCalendarEvent(eventData, templateData);
+    
+    emailResourceTeamLeader_(templateData);
+
+    if (TEST_USE_TODOIST) {
+
+        var todoistConfig = {    
+            spreadsheetId:     responseSSID,
+            rowNumber:         responseSheetMaxRows,
+            token:             Config.get("TODOIST_AUTH_TOKEN"),
+            taskTemplateId:    Config.get("TODOIST_TASKS_TEMPLATE_ID"),
+            commentTemplateId: Config.get("TODOIST_COMMENT_TEMPLATE_ID"),
+            staffSheetId:      Config.get("STAFF_DATA_GSHEET_ID"),
+            properties:        PropertiesService.getDocumentProperties(), 
+            lock:              LockService.getDocumentLock()
+        }
+    
+        Todoist.onFormSubmit(todoistConfig);
+        
+        Log_(todoistConfig);
+    }
+    
+    checkPromotionCalendar_(e);
+    
+    Log_('Finished processing form submission');
+    
+    // Private Functions
+    // -----------------
+
+    function updateResponseSheet() {
+    
+        rowData = schema.reduce(
+            function(rowData, item) {
+                var cellData = Sheets.newCellData();
+                
+                rowData.values = rowData.values || [];
+                
+                cellData.userEnteredValue = Sheets.newExtendedValue();
+                cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
+                
+                rowData.values.push(cellData);
+                
+                return rowData;
+            }, 
+            Sheets.newRowData()
+        );
+        
+        responseSheetMaxRows = responseSheet.getMaxRows();
+        
+        PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
+        
+        Sheets.Spreadsheets.batchUpdate(
+            {
+                "requests":[
+                    {
+                        "insertDimension": {
+                            "inheritFromBefore":true,
+                            "range":{
+                                "dimension":"ROWS",
+                                "sheetId":responseSheetID,
+                                "startIndex": responseSheetMaxRows - 1,
+                                "endIndex": responseSheetMaxRows
+                            }
+                        }
+                    }, 
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":responseSheetID,
+                                "startColumnIndex": 0,
+                                "endColumnIndex": 1,
+                                "startRowIndex": responseSheetMaxRows - 1,
+                                "endRowIndex": responseSheetMaxRows
+                            },
+                            "rows":[
+                                {
+                                    "values":[
+                                        {
+                                            "userEnteredValue":{
+                                                "numberValue":responseTimestamp
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":responseSheetID,
+                                "startColumnIndex": 5,
+                                "endColumnIndex": 20,
+                                "startRowIndex": responseSheetMaxRows - 1,
+                                "endRowIndex": responseSheetMaxRows
+                            },
+                            "rows":[
+                                rowData
+                            ]
+                        }
+                    }
+                ]
+            },
+            responseSSID
+        );
+        
+        Log_('Written to response sheet "' + responseSSID + '"');
+        
+    } // onFormSubmit.updateResponseSheet()
+
+    function updateHootSuite() {
+    
+        // HootSuite sheet Update
+        var hootSuiteRows = [],
+            numEntries = tier === "GOLD" ? 3 :
+                         tier === "SILVER" ? 2 :
+                         1;
             
-            rowData.values = rowData.values || [];
+        for(var i = 1; i <= numEntries; i++) {
+            
+            var rowData = Sheets.newRowData(),
+                cellData = Sheets.newCellData();
+            
+            rowData.values = [];
             
             cellData.userEnteredValue = Sheets.newExtendedValue();
-            cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
+            cellData.userEnteredValue.numberValue = toExcelSerialNumberFormat(new Date(eventData.startTime.getTime() - (7 * MILLISECONDS_IN_A_DAY * i)));
+                
+            rowData.values.push(cellData);
+            
+            cellData = Sheets.newCellData();
+            cellData.userEnteredValue = Sheets.newExtendedValue();
+            cellData.userEnteredValue.stringValue = templateData.event.about; // + " - " + templateData.event.startTime;
             
             rowData.values.push(cellData);
             
-            return rowData;
-        }, 
-        Sheets.newRowData()
-    );
-    
-    var responseSheetMaxRows = responseSheet.getMaxRows();
-    
-    PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
-    
-    Sheets.Spreadsheets.batchUpdate(
-        {
-            "requests":[
-                {
-                    "insertDimension": {
-                        "inheritFromBefore":true,
-                        "range":{
-                            "dimension":"ROWS",
-                            "sheetId":responseSheetID,
-                            "startIndex": responseSheetMaxRows - 1,
-                            "endIndex": responseSheetMaxRows
-                        }
-                    }
-                }, 
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":responseSheetID,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 1,
-                            "startRowIndex": responseSheetMaxRows - 1,
-                            "endRowIndex": responseSheetMaxRows
-                        },
-                        "rows":[
-                            {
-                                "values":[
-                                    {
-                                        "userEnteredValue":{
-                                            "numberValue":responseTimestamp
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                },
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":responseSheetID,
-                            "startColumnIndex": 5,
-                            "endColumnIndex": 20,
-                            "startRowIndex": responseSheetMaxRows - 1,
-                            "endRowIndex": responseSheetMaxRows
-                        },
-                        "rows":[
-                            rowData
-                        ]
-                    }
-                }
-            ]
-        },
-        responseSSID
-    );
-    
-    
-    // HootSuite sheet Update
-    var hootSuiteRows = [],
-        numEntries = tier === "GOLD" ? 3 :
-                     tier === "SILVER" ? 2 :
-                     1;
-        
-    for(var i = 1; i <= numEntries; i++) {
-        
-        var rowData = Sheets.newRowData(),
             cellData = Sheets.newCellData();
-        
-        rowData.values = [];
-        
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.numberValue = toExcelSerialNumberFormat(new Date(eventData.startTime.getTime() - (7 * MILLISECONDS_IN_A_DAY * i)));
+            cellData.userEnteredValue = Sheets.newExtendedValue();
+            cellData.userEnteredValue.stringValue = registrationURL ? registrationURL : "";
             
-        rowData.values.push(cellData);
+            rowData.values.push(cellData);
+            
+            hootSuiteRows.push(rowData);
+        }
         
-        cellData = Sheets.newCellData();
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.stringValue = templateData.event.about; // + " - " + templateData.event.startTime;
+        var hootsuiteSheetMaxRows = hootsuiteSheet.getMaxRows();
         
-        rowData.values.push(cellData);
-        
-        cellData = Sheets.newCellData();
-        cellData.userEnteredValue = Sheets.newExtendedValue();
-        cellData.userEnteredValue.stringValue = (registrationURL)? registrationURL : "";
-        
-        rowData.values.push(cellData);
-        
-        hootSuiteRows.push(rowData);
-    }
-    
-    var hootsuiteSheetMaxRows = hootsuiteSheet.getMaxRows();
-    
-    Sheets.Spreadsheets.batchUpdate(
-        {
-            "requests":[
-                {
-                    "insertDimension":{
-                        "inheritFromBefore":true,
-                        "range":{
-                            "dimension":"ROWS",
-                            "sheetId":hootsuiteSheetID,
-                            "startIndex":hootsuiteSheetMaxRows,
-                            "endIndex":hootsuiteSheetMaxRows + hootSuiteRows.length
+        Sheets.Spreadsheets.batchUpdate(
+            {
+                "requests":[
+                    {
+                        "insertDimension":{
+                            "inheritFromBefore":true,
+                            "range":{
+                                "dimension":"ROWS",
+                                "sheetId":hootsuiteSheetID,
+                                "startIndex":hootsuiteSheetMaxRows,
+                                "endIndex":hootsuiteSheetMaxRows + hootSuiteRows.length
+                            }
+                        }
+                    },
+                    {
+                        "updateCells": {
+                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                            "range": {
+                                "sheetId":hootsuiteSheetID,
+                                "startColumnIndex": 0,
+                                "endColumnIndex": 3,
+                                "startRowIndex": hootsuiteSheetMaxRows,
+                                "endRowIndex": hootsuiteSheetMaxRows + hootSuiteRows.length
+                            },
+                            "rows": hootSuiteRows
                         }
                     }
-                },
-                {
-                    "updateCells": {
-                        "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                        "range": {
-                            "sheetId":hootsuiteSheetID,
-                            "startColumnIndex": 0,
-                            "endColumnIndex": 3,
-                            "startRowIndex": hootsuiteSheetMaxRows,
-                            "endRowIndex": hootsuiteSheetMaxRows + hootSuiteRows.length
-                        },
-                        "rows": hootSuiteRows
-                    }
-                }
-            ]
-        }, 
-        hootsuiteSSID
-    );
-       
-    sendConfirmationEmail(sponsorEmail, templateData);
-    
-    eventData.calendarName = propertyCache.get("CALENDAR_NAME");
-    createCalendarEvent(eventData, templateData);
-    
-    emailResourceTeamLeader(templateData);
-    
-    var todoistConfig = {
-    
-        spreadsheetId:     responseSSID,
-        rowNumber:         responseSheetMaxRows,
-        token:             propertyCache.get("TODOIST_AUTH_TOKEN"),
-        taskTemplateId:    propertyCache.get("TODOIST_TASKS_TEMPLATE_ID"),
-        commentTemplateId: propertyCache.get("TODOIST_COMMENT_TEMPLATE_ID"),
-        staffSheetId:      propertyCache.get("STAFF_SPREADSHEET_ID"),
-        properties:        PropertiesService.getDocumentProperties(), 
-        lock:              LockService.getDocumentLock()
-    }
+                ]
+            }, 
+            hootsuiteSSID
+        );
+        
+        Log_('Written to hootsuite sheet "' + hootsuiteSSID + '"');
+            
+    } // onFormSubmit.updateHootSuite()
 
-    Todoist.onFormSubmit(todoistConfig);
-    
-    checkPromotionCalendar(e);
-    
 } // onFormSubmit()
 
 /**
@@ -1399,6 +819,11 @@ function onFormSubmit(e) {
  * @param {Object} templateData   - Data to be passed to email template
  */
 function sendConfirmationEmail(recipientEmail, templateData) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
+
     var template = HtmlService.createTemplateFromFile('confirmation_email_template');
     
     Object.assign(template, templateData);
@@ -1456,11 +881,14 @@ function createCalendarEvent(eventData, templateData) {
  *
  * @param {Object} templateData   - Data to be passed to email template
  */
-function emailResourceTeamLeader(templateData) {
+function emailResourceTeamLeader_(templateData) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
 
     var template = HtmlService.createTemplateFromFile('email_resource_team_leader_template'),
-        propertyCache = new PropertyCache(),
-        ss = SpreadsheetApp.openById(propertyCache.get("STAFF_SPREADSHEET_ID"));
+        ss = SpreadsheetApp.openById(Config.get("STAFF_DATA_GSHEET_ID"));
     
     Object.assign(template, templateData);
     
@@ -1508,6 +936,11 @@ function validateFormResponse(data) {
  * @param data {Object} Data to inject into the email template
  */
 function sendErrorReportEmailToRespondent(recipientEmail, data) {
+
+    if (!TEST_SEND_EMAILS) {
+        return;
+    }
+
     var template = HtmlService.createTemplateFromFile('error_report_template');
     
     Object.assign(template, data);
