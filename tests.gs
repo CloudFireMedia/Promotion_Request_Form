@@ -11,17 +11,31 @@ function Log_(message) {
     message = JSON.stringify(message)
   }
 
+  message = new Date() + ' - ' + message
+
   SpreadsheetApp
     .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
     .getSheetByName('Log')
-    .appendRow([new Date() + ' - ' + message])
+    .appendRow([message])
+    
+  console.log(message)
 }
 
 // Tests
 // -----
 
 function test() {
-  SpreadsheetApp.openById('1oO3kz6fQP74TAzW3JXlpLQR23mn5uAQfd-fGcakCtId')
+  var ssID = '1c4UdY77XmUlLO6mjK7doG9wFloVcQpEqSyQj6uTxex4'
+  var response = UrlFetchApp.fetch(
+    Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=modifiedTime,version", ssID),
+    {
+      "headers":{
+        "Authorization":"Bearer " + ScriptApp.getOAuthToken()
+      }
+    }
+  )
+  var result = JSON.parse(response);
+  return
 }
 
 function test_pollStaffSpreadsheet() {

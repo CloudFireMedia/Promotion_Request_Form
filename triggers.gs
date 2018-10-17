@@ -20,6 +20,8 @@ function onInstall() {
   propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
   
   updateForm(null);
+  
+  Log_('Installed PRF');
 }
 
 /** Shows all of the cache settings */
@@ -49,8 +51,8 @@ function showCache() {
  * @param {Event} e - An event object. Set when the function is invoked from a trigger.
  */
 function updateForm(e) {
-    pollStaffSpreadsheet_();
-    updateDatePatternsForTiers_();
+//    pollStaffSpreadsheet_();
+//    updateDatePatternsForTiers_();
 }
 
 /**
