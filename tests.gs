@@ -7,6 +7,12 @@ function Log_(message) {
     return;
   }
 
+  var authRequired = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL).getAuthorizationStatus()
+  
+  if (authRequired === ScriptApp.AuthorizationStatus.REQUIRED) {
+    return
+  }
+
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
@@ -24,17 +30,10 @@ function Log_(message) {
 // Tests
 // -----
 
-function test() {
-  var ssID = '1c4UdY77XmUlLO6mjK7doG9wFloVcQpEqSyQj6uTxex4'
-  var response = UrlFetchApp.fetch(
-    Utilities.formatString("https://www.googleapis.com/drive/v3/files/%s?fields=modifiedTime,version", ssID),
-    {
-      "headers":{
-        "Authorization":"Bearer " + ScriptApp.getOAuthToken()
-      }
-    }
-  )
-  var result = JSON.parse(response);
+function test(a) {
+  if (a === undefined) {
+    return
+  }
   return
 }
 

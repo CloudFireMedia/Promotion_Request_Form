@@ -44,6 +44,29 @@ function showCache() {
     FormApp.getUi().alert(prompt)
 }
 
+function initialised(e) {
+    var alreadyInitialised = false;
+    
+    if (e !== undefined && e.hasOwnProperty('authMode') && e.authMode !== ScriptApp.AuthMode.NONE) {
+
+        var propertyCache = new PropertyCache,
+            updateFormTriggerId = propertyCache.get(UPDATE_FORM_CONTEXT_ID),
+            formSubmitTriggerId = propertyCache.get(FORM_SUBMIT_CONTEXT_ID);
+        
+        if (updateFormTriggerId !== null && formSubmitTriggerId !== null) {
+          return true;
+        }       
+    }
+
+    return alreadyInitialised;
+}
+
+function clearConfig() {
+  var propertyCache = new PropertyCache,
+      updateFormTriggerId = propertyCache.remove(UPDATE_FORM_CONTEXT_ID, true),
+      formSubmitTriggerId = propertyCache.remove(FORM_SUBMIT_CONTEXT_ID, true);
+}
+
 /**
  * Updates the name and date range items on 
  * promotion request form.
@@ -51,8 +74,8 @@ function showCache() {
  * @param {Event} e - An event object. Set when the function is invoked from a trigger.
  */
 function updateForm(e) {
-//    pollStaffSpreadsheet_();
-//    updateDatePatternsForTiers_();
+    pollStaffSpreadsheet_();
+    updateDatePatternsForTiers_();
 }
 
 /**
