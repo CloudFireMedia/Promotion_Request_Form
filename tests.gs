@@ -7,21 +7,34 @@ function Log_(message) {
     return;
   }
 
+  var authRequired = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL).getAuthorizationStatus()
+  
+  if (authRequired === ScriptApp.AuthorizationStatus.REQUIRED) {
+    return
+  }
+
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
 
+  message = new Date() + ' - ' + message
+
   SpreadsheetApp
     .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
     .getSheetByName('Log')
-    .appendRow([new Date() + ' - ' + message])
+    .appendRow([message])
+    
+  console.log(message)
 }
 
 // Tests
 // -----
 
-function test() {
-  SpreadsheetApp.openById('1oO3kz6fQP74TAzW3JXlpLQR23mn5uAQfd-fGcakCtId')
+function test(a) {
+  if (a === undefined) {
+    return
+  }
+  return
 }
 
 function test_pollStaffSpreadsheet() {

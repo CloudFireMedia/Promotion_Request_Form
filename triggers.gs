@@ -20,6 +20,8 @@ function onInstall() {
   propertyCache.put(FORM_SUBMIT_CONTEXT_ID, trigger.getUniqueId(), true);
   
   updateForm(null);
+  
+  Log_('Installed PRF');
 }
 
 /** Shows all of the cache settings */
@@ -40,6 +42,29 @@ function showCache() {
             "Todoist Comment Template GDoc ID: " + Config.get("TODOIST_COMMENT_TEMPLATE_ID")
 
     FormApp.getUi().alert(prompt)
+}
+
+function initialised(e) {
+    var alreadyInitialised = false;
+    
+    if (e !== undefined && e.hasOwnProperty('authMode') && e.authMode !== ScriptApp.AuthMode.NONE) {
+
+        var propertyCache = new PropertyCache,
+            updateFormTriggerId = propertyCache.get(UPDATE_FORM_CONTEXT_ID),
+            formSubmitTriggerId = propertyCache.get(FORM_SUBMIT_CONTEXT_ID);
+        
+        if (updateFormTriggerId !== null && formSubmitTriggerId !== null) {
+          return true;
+        }       
+    }
+
+    return alreadyInitialised;
+}
+
+function clearConfig() {
+  var propertyCache = new PropertyCache,
+      updateFormTriggerId = propertyCache.remove(UPDATE_FORM_CONTEXT_ID, true),
+      formSubmitTriggerId = propertyCache.remove(FORM_SUBMIT_CONTEXT_ID, true);
 }
 
 /**
