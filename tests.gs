@@ -37,13 +37,16 @@ function test(a) {
   return
 }
 
+function test_onFormSubmit() {
+  onFormSubmit({triggerUid: '111'})
+}
+
 function test_pollStaffSpreadsheet() {
   pollStaffSpreadsheet_()
 }
 
 function test_checkPromotionCalendar() {
-  checkPromotionCalendar_()
-  return
+  checkPromotionCalendar_({triggerUid: '111'})
 }
 
 function test_Todoist_onFormSubmit() {

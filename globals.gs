@@ -6,14 +6,14 @@ Object.defineProperties(this, {
         value:"Promotion_Request_Form",
     },
     "SCRIPT_VERSION":{
-        value:"v1.7",
+        value:"v1.8",
     },
 
     "TEST_ENABLE_LOGGING":{
         value:true,
     },
     "TEST_USE_TODOIST":{
-        value:true,
+        value:true, 
     },
     "TEST_CHECK_PROMOTION_CALENDAR":{
         value:true,
