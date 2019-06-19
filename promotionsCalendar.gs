@@ -10,7 +10,15 @@ function checkPromotionCalendar_(e) {
     return;
   }
 
-  var isRunFromTrigger = e.hasOwnProperty('triggerUid');  
+  // Can't work out why this won't work!! Something is corrupting "e", although it is still an object. 
+//  var isRunFromTrigger = e.hasOwnProperty('triggerUid'); 
+
+  var isRunFromTrigger = false
+
+  if (typeof e === 'object' && e.triggerUid !== undefined) {
+    isRunFromTrigger = true
+  }
+
   var responsesSpreadsheet = SpreadsheetApp.openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'));
   
   if (responsesSpreadsheet === null) {
