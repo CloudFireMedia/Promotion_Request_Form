@@ -13,6 +13,13 @@ function Log_(message) {
     return
   }
 
+  var logSheetId = CacheService.getUserCache().get('LOG_SHEET_ID')
+  
+  if (logSheetId === null) {
+    logSheetId = Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID')
+    CacheService.getUserCache().put('LOG_SHEET_ID', logSheetId)
+  }
+
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
@@ -20,7 +27,7 @@ function Log_(message) {
   message = new Date() + ' - ' + message
 
   SpreadsheetApp
-    .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
+    .openById(logSheetId)
     .getSheetByName('Log')
     .appendRow([message])
     
@@ -31,10 +38,18 @@ function Log_(message) {
 // -----
 
 function test(a) {
-  if (a === undefined) {
-    return
-  }
+  var logSheetId = CacheService.getUserCache().get('LOG_SHEET_ID')
   return
+}
+
+function test_FuzzySet() {
+  var a = FuzzySet(["Active Seniors Trip: Farmer's Family Restaurant + Tour"]);
+  var b = a.get("Active Seniors Trip to Farmer's Family Restaurant and Tour of Murfreesboro");
+  return
+}
+
+function test_onFormSubmit() {
+  onFormSubmit({triggerUid: '111'})
 }
 
 function test_pollStaffSpreadsheet() {
@@ -42,8 +57,7 @@ function test_pollStaffSpreadsheet() {
 }
 
 function test_checkPromotionCalendar() {
-  checkPromotionCalendar_()
-  return
+  checkPromotionCalendar_({triggerUid: '111'})
 }
 
 function test_Todoist_onFormSubmit() {

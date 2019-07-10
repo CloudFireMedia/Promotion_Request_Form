@@ -17,11 +17,11 @@
     }, {
       "userSymbol": "Todoist",
       "libraryId": "17nhyoPNV3pGxwp-YTQvceFtzqDHXDAfTdiShgHqghL4bz9WxrlW3Uc7o",
-      "version": "16"
+      "version": "17"
     }, {
       "userSymbol": "Config",
       "libraryId": "1oO44r3nax5MO1XsI1hlr4ZM0OtPVCQKgDYUe08ej_SkIKn9uvzZ6WKQl",
-      "version": "9"
+      "version": "10"
     }]
   },
   "exceptionLogging": "STACKDRIVER"

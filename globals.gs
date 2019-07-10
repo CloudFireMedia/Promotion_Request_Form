@@ -6,14 +6,14 @@ Object.defineProperties(this, {
         value:"Promotion_Request_Form",
     },
     "SCRIPT_VERSION":{
-        value:"v1.7",
+        value:"v1.8.dev_ajr",
     },
 
     "TEST_ENABLE_LOGGING":{
         value:true,
     },
     "TEST_USE_TODOIST":{
-        value:true,
+        value:true, 
     },
     "TEST_CHECK_PROMOTION_CALENDAR":{
         value:true,
@@ -30,12 +30,6 @@ Object.defineProperties(this, {
     },
     "PROMOTION_CALENDAR_SHEET_NAME":{
         value:'Communications Director Master',
-    },
-    "MATCH_THRESHOLD_PERCENT":{
-        value:0.75,  // fuzzy logic matching
-    },
-    "MAX_EVENT_DATE_DIFF":{
-        value:10,
     },
     "DEFAULT_PULL_RANGE_FOR_USER_NAMES":{
         "value":"Staff!A3:B"
