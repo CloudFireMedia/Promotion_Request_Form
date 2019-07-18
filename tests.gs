@@ -38,13 +38,16 @@ function Log_(message) {
 // -----
 
 function test(a) {
-  var logSheetId = CacheService.getUserCache().get('LOG_SHEET_ID')
+  var d1 = new Date()
+  var d2 = new Date(2019,6,15)
+  var a = Math.abs(Utils.DateDiff.inDays(d1,d2))
+  var b = Math.abs(Utils.DateDiff.inDays(d2,d1))
   return
 }
 
 function test_FuzzySet() {
-  var a = FuzzySet(["Active Seniors Trip: Farmer's Family Restaurant + Tour"]);
-  var b = a.get("Active Seniors Trip to Farmer's Family Restaurant and Tour of Murfreesboro");
+  var a = Utils.FuzzySet(["Story Tales Day"]);
+  var b = a.get("Story Tales Today");
   return
 }
 
@@ -57,7 +60,7 @@ function test_pollStaffSpreadsheet() {
 }
 
 function test_checkPromotionCalendar() {
-  checkPromotionCalendar_({triggerUid: '111'})
+  checkPromotionCalendar_()
 }
 
 function test_Todoist_onFormSubmit() {
