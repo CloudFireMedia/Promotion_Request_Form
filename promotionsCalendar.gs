@@ -1,3 +1,5 @@
+// JSHint: 22Jul2019
+
 /**
  * On a form submission check every response against every entry in the 
  * the promotions calendar to see if there are any matches. If so record 
@@ -48,7 +50,7 @@ function checkPromotionCalendar_() {
 
   var errors = [];
   var warnings = [];
-  var recordsFound = [];
+  var recordsFound = {};
   
   var startDateColumnIndex = columnNumbers.EventStart - 1;
   var titleColumnIndex = columnNumbers.EventTitle - 1;
@@ -56,8 +58,6 @@ function checkPromotionCalendar_() {
   var matchThreshold = getConfig('MATCH_THRESHOLD');
   var maxEventDayDiff = getConfig('MAX_EVENT_DATE_DIFF');
   
-  var recordsFound = {};
-
   for (var prfRowIndex = 1; prfRowIndex < responseSheetValues.length; prfRowIndex++){ // prfRowIndex==1 to skip header row
   
     var pRFRowNumber = prfRowIndex + 1;
@@ -70,7 +70,7 @@ function checkPromotionCalendar_() {
       continue;
     }
     
-    if (!eventDate instanceof Date){
+    if (!(eventDate instanceof Date)){
       errors.push('Date ' + eventDate + ' on row ' + pRFRowNumber + ' of ' + DATA_SHEET_NAME + ' sheet is not a valid date.  Skipping this row.');
       continue;
     }
@@ -89,7 +89,7 @@ function checkPromotionCalendar_() {
     
       // check for "errors" first
       var calendarEventDate = calendarValues[pdcRowIndex][3]; //column 4 is SHORT START DATE
-      var pDCRowNumber = pdcRowIndex + 1
+      var pDCRowNumber = pdcRowIndex + 1;
       
       if (!calendarEventDate) {
         errors.push('No event date found, line ' + pDCRowNumber + ' of ' + DATA_SHEET_NAME + ' sheet.  Skipping this row.');
@@ -126,12 +126,12 @@ function checkPromotionCalendar_() {
       // processed later to determine which is the best match
            
       if (!recordsFound.hasOwnProperty(pRFRowNumber)) {
-        recordsFound[pRFRowNumber] = []
+        recordsFound[pRFRowNumber] = [];
       }     
       
       // Convert the match and data diff into a score between 0 and 10
-      var matchScore = ((match - matchThreshold)/(1 - matchThreshold))*10
-      var dateDiffScore = maxEventDayDiff - dayDiff
+      var matchScore = ((match - matchThreshold)/(1 - matchThreshold)) * 10;
+      var dateDiffScore = maxEventDayDiff - dayDiff;
       
       recordsFound[pRFRowNumber].push({
         pRFTitle      : eventTitle,
@@ -156,11 +156,11 @@ function checkPromotionCalendar_() {
   Log_('recordsFound:');  
   Log_(recordsFound);
 
-  setPromoRequested(calendarSheet)
+  setPromoRequested(calendarSheet);
 
   Log_('Checked promotion calendar'); 
  
-  return
+  return;
   
   // Private Functions
   // -----------------
@@ -179,10 +179,10 @@ function checkPromotionCalendar_() {
         
     calendarSS.getSheetByName('Config').getDataRange().getValues().some(function(row) {
       if (row[0] === key) {
-        value = row[1]
+        value = row[1];
         return true;
       }
-    })
+    });
     
     if (value === null) {
       throw new Error('Could not find ' + key + ' in the config');
@@ -205,9 +205,9 @@ function checkPromotionCalendar_() {
       var fuzzy = Utils.FuzzySet([firstString]);
       var match = fuzzy.get(secondString);
       if (match !== null) {
-        return match[0][0]
+        return match[0][0];
       } else {
-        return null
+        return null;
       }
     } // checkPromotionCalendar_().getMatchValue()
 
@@ -227,22 +227,32 @@ function checkPromotionCalendar_() {
           continue;
         }
         
-        var pDCRowNumber
-        var nextRecord = recordsFound[pRFRowNumber]
+        var pDCRowNumber;
+        var nextRecord = recordsFound[pRFRowNumber];
 
         // Chcek if there is only one match to this PRF event
         if (nextRecord.length === 1) {
-          pDCRowNumber = nextRecord[0].pDCRowNumber
+          pDCRowNumber = nextRecord[0].pDCRowNumber;
         } else {
-          pDCRowNumber = getRowWithBestScore()          
+          pDCRowNumber = getRowWithBestScore();
         }
 
         if (pDCRowNumber === null || pDCRowNumber === undefined) {
-          throw new Error('Found more than one matching entry for PRF row number ' + pRFRowNumber)
-        }
+          
+          var adminEmail = Session.getEffectiveUser().getEmail();
+          
+          var message = 
+            'Found more than one matching entry for PRF row number ' + pRFRowNumber + 
+            ': ' + JSON.stringify(recordsFound);
+            
+          MailApp.sendEmail(adminEmail, 'Failed to find PDC match', message);
+          Log_(message);
+          
+        } else {
 
-        calendarSheet.getRange(pDCRowNumber, 7).setValue('Yes'); // column 7 is PROMO REQ?        
-        Log_('Promo initiated flag set for in PDC rown number ' + pDCRowNumber);
+          calendarSheet.getRange(pDCRowNumber, 7).setValue('Yes'); // column 7 is "PROMO REQ?"        
+          Log_('Promo initiated flag set for in PDC rown number ' + pDCRowNumber);
+        }
         
       } // for each record
       
@@ -257,30 +267,30 @@ function checkPromotionCalendar_() {
        
       function getRowWithBestScore() {
       
-        var pDCRowNumber
-        var bestScoreCount = {}
-        var bestScore = null
+        var pDCRowNumber;
+        var bestScoreCount = {};
+        var bestScore = null;
         
         nextRecord.forEach(function(record) {
         
           if (bestScore === null || record.score >= bestScore) {
           
-            bestScore = record.score
-            pDCRowNumber = record.pDCRowNumber
-            Log_('New best score: ' + bestScore + ', PDC row number ' + pDCRowNumber)
+            bestScore = record.score;
+            pDCRowNumber = record.pDCRowNumber;
+            Log_('New best score: ' + bestScore + ', PDC row number ' + pDCRowNumber);
 
             if (!bestScoreCount.hasOwnProperty(bestScore)) {
-              bestScoreCount[bestScore] = 0
+              bestScoreCount[bestScore] = 0;
             }
             
-            bestScoreCount[bestScore]++
+            bestScoreCount[bestScore]++;
           }
-        })
+        });
         
         if (bestScoreCount[bestScore] === 1) {
-          return pDCRowNumber
+          return pDCRowNumber;
         } else {
-          return null // More than one record with this high score
+          return null; // More than one record with this high score
         }
               
       } // checkPromotionCalendar_.setPromoRequested.getRowWithBestScore()
