@@ -358,7 +358,8 @@ function isLeapYear(year) {
 function onFormSubmit(e) {
 
     Log_(e);
-
+    Log_(SCRIPT_VERSION);
+    
     var hootsuiteSSID = Config.get("HOOTSUITE_SPREADSHEET_ID"),
         hootsuiteSheet = SpreadsheetApp.openById(hootsuiteSSID).getSheetByName(DEFAULT_HOOTSUITE_SHEET_NAME),
         hootsuiteSheetID = hootsuiteSheet.getSheetId(),  
@@ -672,9 +673,10 @@ function onFormSubmit(e) {
         Log_(todoistConfig);
     }
     
-    checkPromotionCalendar_(e);
-    
+    checkPromotionCalendar_(e);    
     Log_('Finished processing form submission');
+    
+    return;
     
     // Private Functions
     // -----------------
@@ -898,7 +900,6 @@ function createCalendarEvent(eventData, templateData) {
         eventData.endTime,
         options
     );
-    
 }
 
 /**

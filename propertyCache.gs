@@ -18,7 +18,7 @@
     /**
      * Constructor
      */ 
-    context.PropertyCache = function(){
+    context.PropertyCache = function() {
         this.properties = PropertiesService.getDocumentProperties() || PropertiesService.getUserProperties();
         this.cache = CacheService.getDocumentCache() || CacheService.getUserCache();
     };

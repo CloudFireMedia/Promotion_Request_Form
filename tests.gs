@@ -13,6 +13,13 @@ function Log_(message) {
     return
   }
 
+  var logSheetId = CacheService.getUserCache().get('LOG_SHEET_ID')
+  
+  if (logSheetId === null) {
+    logSheetId = Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID')
+    CacheService.getUserCache().put('LOG_SHEET_ID', logSheetId)
+  }
+
   if (typeof message === 'object') {
     message = JSON.stringify(message)
   }
@@ -20,7 +27,7 @@ function Log_(message) {
   message = new Date() + ' - ' + message
 
   SpreadsheetApp
-    .openById(Config.get('PROMOTION_FORM_RESPONSES_GSHEET_ID'))
+    .openById(logSheetId)
     .getSheetByName('Log')
     .appendRow([message])
     
@@ -31,9 +38,16 @@ function Log_(message) {
 // -----
 
 function test(a) {
-  if (a === undefined) {
-    return
-  }
+  var d1 = new Date()
+  var d2 = new Date(2019,6,15)
+  var a = Math.abs(Utils.DateDiff.inDays(d1,d2))
+  var b = Math.abs(Utils.DateDiff.inDays(d2,d1))
+  return
+}
+
+function test_FuzzySet() {
+  var a = Utils.FuzzySet(["Story Tales Day"]);
+  var b = a.get("Story Tales Today");
   return
 }
 
@@ -46,7 +60,7 @@ function test_pollStaffSpreadsheet() {
 }
 
 function test_checkPromotionCalendar() {
-  checkPromotionCalendar_({triggerUid: '111'})
+  checkPromotionCalendar_()
 }
 
 function test_Todoist_onFormSubmit() {
