@@ -37,11 +37,17 @@ function Log_(message) {
 // Tests
 // -----
 
-function test(a) {
-  var d1 = new Date()
-  var d2 = new Date(2019,6,15)
-  var a = Math.abs(Utils.DateDiff.inDays(d1,d2))
-  var b = Math.abs(Utils.DateDiff.inDays(d2,d1))
+function test() {
+
+  var a = getYesterday()
+
+  function getYesterday() {
+    var todayInMs = (new Date()).getTime();
+    var aDayInMs = 24 * 60 * 60 * 1000;
+    var yesterday = new Date(todayInMs -aDayInMs);
+    return yesterday;
+  }
+  
   return
 }
 

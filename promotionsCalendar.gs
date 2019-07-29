@@ -58,6 +58,8 @@ function checkPromotionCalendar_() {
   var matchThreshold = getConfig('MATCH_THRESHOLD');
   var maxEventDayDiff = getConfig('MAX_EVENT_DATE_DIFF');
   
+  var yesterday = getYesterday();
+  
   for (var prfRowIndex = 1; prfRowIndex < responseSheetValues.length; prfRowIndex++){ // prfRowIndex==1 to skip header row
   
     var pRFRowNumber = prfRowIndex + 1;
@@ -72,6 +74,11 @@ function checkPromotionCalendar_() {
     
     if (!(eventDate instanceof Date)){
       errors.push('Date ' + eventDate + ' on row ' + pRFRowNumber + ' of ' + DATA_SHEET_NAME + ' sheet is not a valid date.  Skipping this row.');
+      continue;
+    }
+    
+    if (eventDate < yesterday) {
+      // Ignore event that has already passed
       continue;
     }
     
@@ -164,6 +171,13 @@ function checkPromotionCalendar_() {
   
   // Private Functions
   // -----------------
+
+  function getYesterday() {
+    var todayInMs = (new Date()).getTime();
+    var aDayInMs = 24 * 60 * 60 * 1000;
+    var yesterday = new Date(todayInMs -aDayInMs);
+    return yesterday;
+  }
   
   /**
    * Get config
@@ -250,8 +264,14 @@ function checkPromotionCalendar_() {
           
         } else {
 
-          calendarSheet.getRange(pDCRowNumber, 7).setValue('Yes'); // column 7 is "PROMO REQ?"        
-          Log_('Promo initiated flag set for in PDC rown number ' + pDCRowNumber);
+          var promotReqRange = calendarSheet.getRange(pDCRowNumber, 7); // column 7 is "PROMO REQ?" 
+          
+          if (promotReqRange.getValue() !== 'Yes') {
+            promotReqRange.setValue('Yes');        
+            Log_('Promo initiated flag set for in PDC row number ' + pDCRowNumber);
+          } else {
+            Log_('Promo initiated flag already set for in PDC row number ' + pDCRowNumber);
+          }
         }
         
       } // for each record
