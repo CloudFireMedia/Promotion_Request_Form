@@ -1,3 +1,10 @@
+// v1.10
+// -----
+//
+// - Rather than looking for a match in the PDC for every submission in the 
+//   PRF, it now only looks for matches for those after yesterday (to give us
+//   a little leeway). It also only ticks the “PROMO REQ?” box if it wasn’t already ticked.
+
 // v1.9
 // ----
 //
