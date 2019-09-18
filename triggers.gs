@@ -690,7 +690,13 @@ function onFormSubmit(e) {
                 rowData.values = rowData.values || [];
                 
                 cellData.userEnteredValue = Sheets.newExtendedValue();
-                cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
+                
+                if (typeof item.value === 'object') {
+                  // Assume the object is an array
+                  cellData.userEnteredValue["stringValue"] = item.value[0];                
+                } else {
+                  cellData.userEnteredValue[(typeof item.value) + "Value"] = item.value;
+                }
                 
                 rowData.values.push(cellData);
                 
@@ -703,62 +709,63 @@ function onFormSubmit(e) {
         
         PropertiesService.getDocumentProperties().setProperty("rowData", JSON.stringify(rowData));
         
-        Sheets.Spreadsheets.batchUpdate(
+        var updateValues = {
+          "requests":[
             {
-                "requests":[
-                    {
-                        "insertDimension": {
-                            "inheritFromBefore":true,
-                            "range":{
-                                "dimension":"ROWS",
-                                "sheetId":responseSheetID,
-                                "startIndex": responseSheetMaxRows - 1,
-                                "endIndex": responseSheetMaxRows
-                            }
+              "insertDimension": {
+                "inheritFromBefore":true,
+                "range":{
+                  "dimension":"ROWS",
+                  "sheetId":responseSheetID,
+                  "startIndex": responseSheetMaxRows - 1,
+                  "endIndex": responseSheetMaxRows
+                }
+              }
+            }, 
+            {
+              "updateCells": {
+                "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                "range": {
+                  "sheetId":responseSheetID,
+                  "startColumnIndex": 0,
+                  "endColumnIndex": 1,
+                  "startRowIndex": responseSheetMaxRows - 1,
+                  "endRowIndex": responseSheetMaxRows
+                },
+                "rows":[
+                  {
+                    "values":[
+                      {
+                        "userEnteredValue":{
+                          "numberValue":responseTimestamp
                         }
-                    }, 
-                    {
-                        "updateCells": {
-                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                            "range": {
-                                "sheetId":responseSheetID,
-                                "startColumnIndex": 0,
-                                "endColumnIndex": 1,
-                                "startRowIndex": responseSheetMaxRows - 1,
-                                "endRowIndex": responseSheetMaxRows
-                            },
-                            "rows":[
-                                {
-                                    "values":[
-                                        {
-                                            "userEnteredValue":{
-                                                "numberValue":responseTimestamp
-                                            }
-                                        }
-                                    ]
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        "updateCells": {
-                            "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
-                            "range": {
-                                "sheetId":responseSheetID,
-                                "startColumnIndex": 5,
-                                "endColumnIndex": 20,
-                                "startRowIndex": responseSheetMaxRows - 1,
-                                "endRowIndex": responseSheetMaxRows
-                            },
-                            "rows":[
-                                rowData
-                            ]
-                        }
-                    }
+                      }
+                    ]
+                  }
                 ]
+              }
             },
-            responseSSID
-        );
+            {
+              "updateCells": {
+                "fields":"userEnteredValue.stringValue,userEnteredValue.numberValue",
+                "range": {
+                  "sheetId":responseSheetID,
+                  "startColumnIndex": 5,
+                  "endColumnIndex": 20,
+                  "startRowIndex": responseSheetMaxRows - 1,
+                  "endRowIndex": responseSheetMaxRows
+                },
+                "rows":[
+                  rowData
+                ]
+              }
+            }
+          ]
+        };
+        
+        Log_(updateValues)
+
+        Sheets.Spreadsheets.batchUpdate(updateValues, responseSSID);
         
         Log_('Written to response sheet "' + responseSSID + '"');
         
