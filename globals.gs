@@ -6,7 +6,7 @@ Object.defineProperties(this, {
         value:"Promotion_Request_Form",
     },
     "SCRIPT_VERSION":{
-        value:"v1.13",
+        value:"v1.14",
     },
 
     "TEST_ENABLE_LOGGING":{
