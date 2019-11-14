@@ -6,7 +6,7 @@ Object.defineProperties(this, {
         value:"Promotion_Request_Form",
     },
     "SCRIPT_VERSION":{
-        value:"v1.13",
+        value:"v1.15",
     },
 
     "TEST_ENABLE_LOGGING":{
@@ -32,10 +32,10 @@ Object.defineProperties(this, {
         value:'Communications Director Master',
     },
     "DEFAULT_PULL_RANGE_FOR_USER_NAMES":{
-        "value":"Staff!A3:B"
+        "value":"'Staff Directory'!A3:B"
     },
     "DEFAULT_PULL_RANGE_FOR_USER_EMAILS":{
-        "value":"Staff!I3:I"
+        "value":"'Staff Directory'!I3:I"
     },
     "DEFAULT_RESPONSE_SHEET_NAME": {
         "value":"Incoming_Data"

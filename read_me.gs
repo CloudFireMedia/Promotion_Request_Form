@@ -1,3 +1,14 @@
+
+// v1.15
+// -----
+//
+// - Update "Staff" to "Staff Directory"
+
+// v1.13 & 1.14
+// ------------
+//
+// - Updates for v8 Todoist API
+
 // v1.10
 // -----
 //
