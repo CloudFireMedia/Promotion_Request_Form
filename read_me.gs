@@ -1,3 +1,8 @@
+// v1.15
+// -----
+//
+// - Update "Staff" to "Staff Directory"
+
 // v1.13 & 1.14
 // ------------
 //
